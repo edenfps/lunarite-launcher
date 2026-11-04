@@ -54,3 +54,7 @@ int  WZStrPrintf(wchar_t* dst, size_t cch, const wchar_t* fmt, ...);
 
 // Directory that holds the running exe, no trailing backslash.
 std::wstring WZGetModuleDir();
+
+// Lunarite: true when the Windows display language is Korean (LUNARITE_LANGUAGE=ko/en overrides). The launcher then reads
+// WZLauncher.kor.wzc, starts the game with -LANGUAGE=KOR and tells the patch server "ko".
+bool WZUserIsKorean();

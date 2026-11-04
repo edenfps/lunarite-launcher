@@ -88,7 +88,7 @@ int WZStrPrintf(wchar_t* dst, size_t cch, const wchar_t* fmt, ...)
     return 0;
 }
 
-// /: GetModuleFileNameW(NULL) with the file name stripped.
+// GetModuleFileNameW(NULL) with the file name stripped.
 std::wstring WZGetModuleDir()
 {
     wchar_t path[MAX_PATH] = {};
@@ -97,4 +97,13 @@ std::wstring WZGetModuleDir()
     if (slash)
         *slash = 0;
     return path;
+}
+
+bool WZUserIsKorean()
+{
+    // LUNARITE_LANGUAGE=ko or en overrides the Windows language (testing, or a player's choice).
+    wchar_t forced[8] = {};
+    if (GetEnvironmentVariableW(L"LUNARITE_LANGUAGE", forced, 8) && forced[0])
+        return _wcsnicmp(forced, L"ko", 2) == 0;
+    return PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_KOREAN;
 }

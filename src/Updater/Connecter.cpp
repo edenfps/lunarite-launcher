@@ -48,7 +48,9 @@ WZResult HTTPConnecter::OpenRemoteFile(HINTERNET* connection, HINTERNET* file, _
                      L"[HTTPConnecter::OpenRemoteFile] Fail : HttpOpenRequest, FileName = %s", m_file->remotePath);
         return m_result;
     }
-    HttpSendRequestW(*file, nullptr, 0, nullptr, 0);
+    // The patch server remembers each address's language for the game server's own messages.
+    const wchar_t* language = WZUserIsKorean() ? L"Accept-Language: ko\r\n" : L"Accept-Language: en\r\n";
+    HttpSendRequestW(*file, language, static_cast<DWORD>(-1), nullptr, 0);
     wchar_t buffer[32] = {};
     DWORD length = 32;
     if (!HttpQueryInfoW(*file, HTTP_QUERY_STATUS_CODE, buffer, &length, nullptr))

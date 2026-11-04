@@ -87,7 +87,7 @@
       <ErrorPatchingFiles>Could not patch the files.</ErrorPatchingFiles>
       <CheckingFiles>Checking files.</CheckingFiles>
       <ErrorCheckingFiles>Could not check the files.</ErrorCheckingFiles>
-      <InstallRequired>Put the launcher in your Huxley folder (next to Binaries).</InstallRequired>
+      <InstallRequired>Run the launcher again to download the game.</InstallRequired>
       <ErrorNetwork>Cannot reach the update server. Is it online, and are you on the right network?</ErrorNetwork>
       <RunOnTheHomepage>The launcher configuration could not be read.</RunOnTheHomepage>
     </Descriptions>

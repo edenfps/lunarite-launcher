@@ -8,6 +8,8 @@ param(
     # Page in the launcher's web panel (an IE control, 734 x 418): the website's launcher.html, for
     # example https://<site>/launcher.html. Default: the patch server's own /notice page.
     [string] $WebUrl,
+    # Page for Korean Windows; default: $WebUrl with launcher.html -> launcher-ko.html.
+    [string] $WebUrlKorean,
     [string] $Output = (Join-Path $PSScriptRoot 'out\bundle'),
     # The Korean Huxley client: it ships the launcher's helper DLLs and LauncherImage folder.
     [Parameter(Mandatory)] [string] $KoreanInstall,
@@ -39,19 +41,23 @@ Get-ChildItem -LiteralPath (Join-Path $here 'bundle\LauncherImage') -File |
 # The launcher reads its own version from this file; the patch server reports the same one.
 [IO.File]::WriteAllText((Join-Path $Output 'LauncherVersion.txt'), '0003.0000')
 
-$xml = [IO.File]::ReadAllText((Join-Path $here 'bundle\WZLauncher.xml'))
 if ([string]::IsNullOrWhiteSpace($WebUrl)) { $WebUrl = "http://${Server}:$Port/notice" }
-$xml = $xml.Replace('{WEBURL}', $WebUrl).Replace('{SERVER}', $Server).Replace('{PORT}', [string]$Port)
+# The Korean news page sits next to the English one (launcher.html -> launcher-ko.html).
+if ([string]::IsNullOrWhiteSpace($WebUrlKorean)) { $WebUrlKorean = $WebUrl -replace 'launcher\.html$', 'launcher-ko.html' }
 # WZLauncher.wzc is the config XML under AES-256-CBC with PKCS7 padding and a fixed key and IV
-# (AesCrypt.dll decrypts it).
+# (AesCrypt.dll decrypts it). A Korean Windows reads WZLauncher.kor.wzc instead.
 $aes = [Security.Cryptography.Aes]::Create()
 try {
     $aes.Mode = 'CBC'; $aes.Padding = 'PKCS7'
     $aes.Key = [Text.Encoding]::ASCII.GetBytes('Jin Hye Jin JJang!! HaHa! Sin Na')
     $aes.IV = [Text.Encoding]::ASCII.GetBytes('Mellong~ Sim Sim')
-    $plain = (New-Object Text.UTF8Encoding($false)).GetBytes($xml)
-    $cipher = $aes.CreateEncryptor().TransformFinalBlock($plain, 0, $plain.Length)
-    [IO.File]::WriteAllBytes((Join-Path $Output 'WZLauncher.wzc'), $cipher)
+    foreach ($config in @(@('WZLauncher.xml', 'WZLauncher.wzc'), @('WZLauncher.kor.xml', 'WZLauncher.kor.wzc'))) {
+        $xml = [IO.File]::ReadAllText((Join-Path $here "bundle\$($config[0])"), [Text.Encoding]::UTF8)
+        $xml = $xml.Replace('{WEBURL_KOR}', $WebUrlKorean).Replace('{WEBURL}', $WebUrl).Replace('{SERVER}', $Server).Replace('{PORT}', [string]$Port)
+        $plain = (New-Object Text.UTF8Encoding($false)).GetBytes($xml)
+        $cipher = $aes.CreateEncryptor().TransformFinalBlock($plain, 0, $plain.Length)
+        [IO.File]::WriteAllBytes((Join-Path $Output $config[1]), $cipher)
+    }
 } finally {
     $aes.Dispose()
 }

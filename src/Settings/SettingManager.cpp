@@ -211,7 +211,10 @@ WZResult SettingManager::GetDecodeXmlPath(wchar_t* outXmlPath)
     wchar_t trimmed[260] = {};
     WZStrCopy(trimmed, 260, dir);
     TrimPath(trimmed);
-    WZStrPrintf(wzcPath, 260, L"%s\\%s", trimmed, L"WZLauncher.wzc");
+    // A Korean Windows reads the Korean config when the bundle has one.
+    WZStrPrintf(wzcPath, 260, L"%s\\%s", trimmed, L"WZLauncher.kor.wzc");
+    if (!WZUserIsKorean() || GetFileAttributesW(wzcPath) == INVALID_FILE_ATTRIBUTES)
+        WZStrPrintf(wzcPath, 260, L"%s\\%s", trimmed, L"WZLauncher.wzc");
     WZStrPrintf(outXmlPath, 260, L"%s\\%s", dir, L"WZLauncherTmp.xml");
     WZStrPrintf(dllPath, 260, L"%s\\%s", dir, L"AesCrypt.dll");
     OutputDebugStringW(wzcPath);
@@ -242,11 +245,12 @@ WZResult SettingManager::GetDecodeXmlPath(wchar_t* outXmlPath)
 void SettingManager::ParseCommandLine()
 {
     // There is no web login to pass a /g ticket, so a plain start
-    // (shortcut or double-click) runs the game with the English client's language switch.
+    // (shortcut or double-click) runs the game with the language switch for the Windows language.
     if (__argc < 2)
     {
-        WZStrCopy(m_CommandLine, 260, L"/g -LANGUAGE=INT");
-        m_Args = { L"/g", L"-LANGUAGE=INT" };
+        const wchar_t* language = WZUserIsKorean() ? L"-LANGUAGE=KOR" : L"-LANGUAGE=INT";
+        WZStrPrintf(m_CommandLine, 260, L"/g %s", language);
+        m_Args = { L"/g", language };
         return;
     }
 

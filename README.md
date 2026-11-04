@@ -16,6 +16,9 @@ Then run `WZLauncher.exe` (or the Lunarite Launcher shortcut). The first start d
 game, about 22 GB, into the launcher's folder; no existing Huxley install is needed. Keep the folder
 path short (under about 140 characters).
 
+On a Korean Windows the launcher, its news page and the game are in Korean; elsewhere English. Set
+the environment variable `LUNARITE_LANGUAGE` to `ko` or `en` to choose yourself.
+
 ## Build
 
 Needs Visual Studio with the C++ desktop tools (x86).
