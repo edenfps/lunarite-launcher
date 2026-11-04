@@ -4,6 +4,16 @@ The game launcher for Lunarite, the community server for Huxley: The Dystopia. I
 game files up to date from the server's patch server, shows the website's news page, and starts
 the game.
 
+## Install
+
+Download from the [latest release](https://github.com/edenfps/lunarite-launcher/releases/latest):
+
+- `LunariteLauncher-win-Setup.exe`: installs the launcher into your Huxley folder (the one with
+  `Binaries`), with shortcuts and an uninstaller.
+- `LunariteLauncher-win-Portable.zip`: the same files; unzip them into your Huxley folder.
+
+Then run `WZLauncher.exe` (or the Lunarite Launcher shortcut).
+
 ## Build
 
 Needs Visual Studio with the C++ desktop tools (x86).
@@ -14,34 +24,29 @@ build.cmd
 
 Output: `out\WZLauncher.exe`.
 
-## Make a player bundle
+## Make a release
 
 ```powershell
-.\Make-LauncherBundle.ps1 -Server <server address> -KoreanInstall <Korean Huxley folder> [-Port 8090] [-WebUrl https://<site>/launcher.html]
+.\Make-LauncherBundle.ps1 -Server <server address> -KoreanInstall <Korean Huxley folder> [-Port 8090] [-WebUrl https://<site>/launcher.html] [-Version 1.0.0]
 ```
 
-Builds `out\bundle` and `out\LunariteLauncher.zip` for players: `WZLauncher.exe`, its encrypted config
-`WZLauncher.wzc` (made from `bundle/WZLauncher.xml`), the launcher images, and the helper DLLs the
-launcher loads (`AesCrypt.dll`, `ZlibAdapter.dll`, `RTPatchAdapter.dll`, `patchw32.dll`).
+Builds the launcher bundle (`out\bundle`) and the two release files,
+`out\LunariteLauncher-win-Setup.exe` and `out\LunariteLauncher-win-Portable.zip`. The setup needs
+[Inno Setup 6](https://jrsoftware.org/isinfo.php); its script is `installer/LunariteLauncher.iss`.
 
-The helper DLLs and the stock `LauncherImage` folder are not in this repository; they are copied
-from the Korean Huxley client's install folder (`-KoreanInstall`), the one with `WZLauncher.exe`
-in it. `bundle/LauncherImage` replaces the frame image.
-
-Players extract the zip into their Huxley folder (the one with `Binaries`) and run
-`WZLauncher.exe`. Nothing is installed; the launcher is portable.
-
-## Release
-
-Upload `out\LunariteLauncher.zip` to a GitHub release:
+The bundle holds `WZLauncher.exe`, its encrypted config `WZLauncher.wzc` (made from
+`bundle/WZLauncher.xml`), the launcher images, and the helper DLLs the launcher loads
+(`AesCrypt.dll`, `ZlibAdapter.dll`, `RTPatchAdapter.dll`, `patchw32.dll`). The helper DLLs and the
+stock `LauncherImage` folder are not in this repository; they are copied from the Korean Huxley
+client's install folder (`-KoreanInstall`), the one with `WZLauncher.exe` in it.
+`bundle/LauncherImage` replaces the frame image.
 
 ```powershell
-gh release create v1.0.0 out\LunariteLauncher.zip --title "Lunarite launcher 1.0.0"
+gh release create v1.0.0 out\LunariteLauncher-win-Setup.exe out\LunariteLauncher-win-Portable.zip --title "Lunarite launcher 1.0.0"
 ```
 
-The website's download button points at
-`https://github.com/edenfps/lunarite-launcher/releases/latest/download/LunariteLauncher.zip`,
-so every new release is picked up without changing the site.
+The website links to `releases/latest/download/` for both files, so every new release is picked up
+without changing the site.
 
 Huxley: The Dystopia and its art and trademarks belong to their owners; this is a non-commercial
 fan project.

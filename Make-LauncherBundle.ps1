@@ -1,6 +1,7 @@
-# Builds the player launcher bundle: WZLauncher.exe, a .wzc pointed at the server's patch server,
-# the files in bundle\ and the helper files from a Huxley install. Players unzip it into their
-# Huxley folder (the one with Binaries) and run WZLauncher.exe.
+# Builds the player launcher: WZLauncher.exe, a .wzc pointed at the server's patch server, the files
+# in bundle\ and the helper files from a Huxley install. Output, next to the bundle folder:
+#   LunariteLauncher-win-Portable.zip  unzip into the Huxley folder (the one with Binaries)
+#   LunariteLauncher-win-Setup.exe     installs into the Huxley folder (needs Inno Setup 6)
 param(
     [Parameter(Mandatory)] [string] $Server,          # address players reach the server at
     [int] $Port = 8090,                               # the patch server's port
@@ -9,13 +10,15 @@ param(
     [string] $WebUrl,
     [string] $Output = (Join-Path $PSScriptRoot 'out\bundle'),
     # The Korean Huxley client: it ships the launcher's helper DLLs and LauncherImage folder.
-    [Parameter(Mandatory)] [string] $KoreanInstall
+    [Parameter(Mandatory)] [string] $KoreanInstall,
+    [string] $Version = '1.0.0'
 )
 
 $ErrorActionPreference = 'Stop'
 $here = $PSScriptRoot
 
-& cmd /c "`"$here\build.cmd`"" | Out-Null
+# vcvarsall prints harmless noise on stderr; only the exit code matters.
+& cmd /c "`"$here\build.cmd`" >nul 2>&1"
 if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed.' }
 
 if (Test-Path -LiteralPath $Output) { Remove-Item -LiteralPath $Output -Recurse -Force }
@@ -67,8 +70,16 @@ The launcher talks to $Server on port $Port. If it says it cannot reach the
 update server, check your internet connection and that the server is online.
 "@ | Set-Content -LiteralPath (Join-Path $Output 'README.txt') -Encoding ascii
 
-# Release asset name: the website links to releases/latest/download/LunariteLauncher.zip.
-$zip = Join-Path (Split-Path -Parent $Output) 'LunariteLauncher.zip'
+# Release asset names; the website links to releases/latest/download/LunariteLauncher-win-Setup.exe.
+$dist = Split-Path -Parent $Output
+$zip = Join-Path $dist 'LunariteLauncher-win-Portable.zip'
 if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
 Compress-Archive -Path (Join-Path $Output '*') -DestinationPath $zip
-Write-Output "Bundle: $Output ($zip)"
+Write-Output "Portable: $zip"
+
+$iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+    "$env:ProgramFiles\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+if (-not $iscc) { Write-Warning 'Inno Setup 6 not found; skipped the Setup.exe.'; return }
+& $iscc /Q "/DAppVersion=$Version" "/DBundleDir=$Output" "/O$dist" (Join-Path $here 'installer\LunariteLauncher.iss')
+if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
+Write-Output "Setup: $(Join-Path $dist 'LunariteLauncher-win-Setup.exe')"
