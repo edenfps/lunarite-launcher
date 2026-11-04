@@ -47,7 +47,9 @@ Name: "{autoprograms}\Lunarite Launcher"; Filename: "{app}\WZLauncher.exe"; Work
 Name: "{autodesktop}\Lunarite Launcher"; Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; IconFilename: "{app}\LauncherImage\HuxleyTheDistopia.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; Description: "Start the launcher"; Flags: nowait postinstall skipifsilent
+; Not under Wine/Proton: Steam ends a shortcut's session when its program (this setup) exits, which
+; takes a launcher started from here down with it. The finished page says what to run instead.
+Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; Description: "Start the launcher"; Flags: nowait postinstall skipifsilent; Check: not IsWine
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\Binaries"
@@ -59,9 +61,25 @@ Type: filesandordirs; Name: "{app}\DownloadTemp"
 Type: filesandordirs; Name: "{app}\LauncherTemp"
 Type: files; Name: "{app}\Version_2.txt"
 Type: files; Name: "{app}\WZLauncher.Log"
+Type: files; Name: "{app}\WZLauncher.crc"
 Type: dirifempty; Name: "{app}"
 
 [Code]
+function IsWine: Boolean;
+begin
+  Result := RegKeyExists(HKLM, 'Software\Wine') or RegKeyExists(HKCU, 'Software\Wine');
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if (CurPageID = wpFinished) and IsWine then
+    WizardForm.FinishedLabel.Caption :=
+      'The launcher is installed in ' + ExpandConstant('{app}') + '.' + #13#10#13#10 +
+      'On Linux (Steam Proton or Wine), start it from there: add WZLauncher.exe from that folder to ' +
+      'Steam as a non-Steam game (or point this shortcut at it) and launch that. Setup does not start ' +
+      'it here, because Steam closes everything when Setup exits.';
+end;
+
 // Game paths reach 110 characters under the folder, and the launcher works within 260.
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
