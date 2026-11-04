@@ -67,7 +67,8 @@ The launcher talks to $Server on port $Port. If it says it cannot reach the
 update server, check your internet connection and that the server is online.
 "@ | Set-Content -LiteralPath (Join-Path $Output 'README.txt') -Encoding ascii
 
-$zip = "$Output.zip"
+# Release asset name: the website links to releases/latest/download/LunariteLauncher.zip.
+$zip = Join-Path (Split-Path -Parent $Output) 'LunariteLauncher.zip'
 if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
 Compress-Archive -Path (Join-Path $Output '*') -DestinationPath $zip
 Write-Output "Bundle: $Output ($zip)"
