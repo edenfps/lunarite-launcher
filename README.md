@@ -57,5 +57,8 @@ gh release create v1.0.0 out\LunariteLauncher-win-Setup.exe out\LunariteLauncher
 The website links to `releases/latest/download/` for both files, so every new release is picked up
 without changing the site.
 
+## License
+
+The launcher source is licensed under the GNU Affero General Public License v3.0 (`LICENSE`).
 Huxley: The Dystopia and its art and trademarks belong to their owners; this is a non-commercial
 fan project.
