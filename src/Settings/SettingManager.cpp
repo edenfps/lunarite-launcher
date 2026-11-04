@@ -482,12 +482,10 @@ WZResult SettingManager::ParseGameRegistry(XmlNode* node, UpdateInfo* update)
     WZRegReadString(rootKey, subKey, rootValueName, (BYTE*)pathValue);
     TrimPath(pathValue);
 
-    // No installer writes these values. When they are
-    // missing and the launcher sits in a Huxley folder (Binaries\<ExecutionFile> exists), register
-    // that folder. The key must exist anyway: the updater only opens it for LastPatchState / NPT.
-    // WZRegReadString reads at most 259 bytes, so a long path comes back cut; recheck the exe too.
-    if (!pathValue[0] || GetFileAttributesW(pathValue) == INVALID_FILE_ATTRIBUTES
-        || GetFileAttributesW(exeValue) == INVALID_FILE_ATTRIBUTES)
+    // The game lives in the launcher's own folder. In an empty folder the update's full-file check
+    // finds every file missing and downloads the whole client, so no existing install is needed.
+    // The registry values are rewritten when they point elsewhere: the updater opens the key for
+    // LastPatchState / NPT, and other tools read the game path from it.
     {
         const wchar_t* launcherDir = m_pLauncherUpdate->Path->RootDir;
         wchar_t exe[260] = {};
@@ -495,13 +493,13 @@ WZResult SettingManager::ParseGameRegistry(XmlNode* node, UpdateInfo* update)
         AddBackslash(exe);
         Append(exe, L"Binaries\\");
         Append(exe, executionFile[0] ? executionFile : L"HuxleyMMOGame.exe");
-        if (GetFileAttributesW(exe) != INVALID_FILE_ATTRIBUTES
-            && WZRegWriteString(rootKey, subKey, rootValueName, launcherDir)
-            && WZRegWriteString(rootKey, subKey, exeValueName, exe))
+        if (_wcsicmp(pathValue, launcherDir) != 0 || _wcsicmp(exeValue, exe) != 0)
         {
-            WZStrCopy(pathValue, 260, launcherDir);
-            WZStrCopy(exeValue, 260, exe);
+            WZRegWriteString(rootKey, subKey, rootValueName, launcherDir);
+            WZRegWriteString(rootKey, subKey, exeValueName, exe);
         }
+        WZStrCopy(pathValue, 260, launcherDir);
+        WZStrCopy(exeValue, 260, exe);
     }
 
     update->Path->SetPaths(pathValue, exeValue, tempFolder);

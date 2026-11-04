@@ -1,7 +1,7 @@
 # Builds the player launcher: WZLauncher.exe, a .wzc pointed at the server's patch server, the files
 # in bundle\ and the helper files from a Huxley install. Output, next to the bundle folder:
-#   LunariteLauncher-win-Portable.zip  unzip into the Huxley folder (the one with Binaries)
-#   LunariteLauncher-win-Setup.exe     installs into the Huxley folder (needs Inno Setup 6)
+#   LunariteLauncher-win-Portable.zip  unzip into an empty folder; the launcher downloads the game there
+#   LunariteLauncher-win-Setup.exe     installs the launcher with shortcuts (needs Inno Setup 6)
 param(
     [Parameter(Mandatory)] [string] $Server,          # address players reach the server at
     [int] $Port = 8090,                               # the patch server's port
@@ -60,11 +60,10 @@ try {
 Huxley launcher
 ===============
 
-1. Start from a clean US Huxley install (the October 2010 English client).
-2. Copy everything in this folder into the Huxley folder (the one that contains
-   Binaries, HuxleyGame and HuxleyMMOGame).
-3. Run WZLauncher.exe. It downloads the server's game files the first time
-   (about 1.3 GB) and only changed files after that, then press Start.
+1. Put this folder where you want the game, with a short path such as
+   C:\Games\Lunarite and about 23 GB free.
+2. Run WZLauncher.exe. The first time it downloads the whole game (about
+   22 GB); after that only changed files. Then press Start.
 
 The launcher talks to $Server on port $Port. If it says it cannot reach the
 update server, check your internet connection and that the server is online.

@@ -1,5 +1,6 @@
-; Lunarite launcher setup. Installs the launcher bundle (out\bundle) into the player's Huxley folder,
-; the one with Binaries, and adds shortcuts. Uninstalling removes only the launcher's own files.
+; Lunarite launcher setup. Installs the launcher bundle (out\bundle) into a game folder and adds
+; shortcuts; the launcher then downloads the whole game into that folder. Uninstalling removes the
+; launcher and the game files it downloaded.
 ; Built by Make-LauncherBundle.ps1, which passes /DAppVersion=<version> /DBundleDir=<bundle folder>.
 
 #ifndef AppVersion
@@ -15,13 +16,14 @@ AppName=Lunarite Launcher
 AppVersion={#AppVersion}
 AppPublisher=Lunarite
 AppPublisherURL=https://lunarite-website.vercel.app/
-DefaultDirName={code:DefaultHuxleyDir}
-AppendDefaultDirName=no
-DirExistsWarning=no
+; Outside Program Files: the game writes its configs and logs into its own folder.
+DefaultDirName={sd}\Games\Lunarite
 DisableProgramGroupPage=yes
 UsePreviousAppDir=yes
-PrivilegesRequired=admin
-PrivilegesRequiredOverridesAllowed=commandline
+PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=commandline dialog
+; The game the launcher downloads, about 22 GB.
+ExtraDiskSpaceRequired=23000000000
 WizardStyle=modern
 SetupIconFile={#BundleDir}\LauncherImage\HuxleyTheDistopia.ico
 UninstallDisplayIcon={app}\WZLauncher.exe
@@ -32,8 +34,7 @@ Compression=lzma2
 SolidCompression=yes
 
 [Messages]
-SelectDirLabel3=Setup will install the Lunarite launcher into your Huxley folder.
-SelectDirBrowseLabel=Pick the Huxley folder (the one that contains Binaries, HuxleyGame and HuxleyMMOGame), then click Next.
+SelectDirLabel3=Setup will install the Lunarite launcher into this folder. The launcher then downloads Huxley (about 22 GB) into the same folder.
 
 [Tasks]
 Name: desktopicon; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"
@@ -49,25 +50,25 @@ Name: "{autodesktop}\Lunarite Launcher"; Filename: "{app}\WZLauncher.exe"; Worki
 Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; Description: "Start the launcher"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
+Type: filesandordirs; Name: "{app}\Binaries"
+Type: filesandordirs; Name: "{app}\Engine"
+Type: filesandordirs; Name: "{app}\Huxley"
+Type: filesandordirs; Name: "{app}\HuxleyGame"
+Type: filesandordirs; Name: "{app}\HuxleyMMOGame"
+Type: filesandordirs; Name: "{app}\DownloadTemp"
+Type: filesandordirs; Name: "{app}\LauncherTemp"
+Type: files; Name: "{app}\Version_2.txt"
 Type: files; Name: "{app}\WZLauncher.Log"
+Type: dirifempty; Name: "{app}"
 
 [Code]
-// The launcher records the game folder in HKCU\Software\Webzen\HuxleyTheDystopia\PATH.
-function DefaultHuxleyDir(Param: String): String;
-begin
-  if not RegQueryStringValue(HKCU, 'Software\Webzen\HuxleyTheDystopia', 'PATH', Result) then
-    if not RegQueryStringValue(HKLM32, 'Software\Webzen\HuxleyTheDystopia', 'PATH', Result) then
-      Result := ExpandConstant('{autopf32}\Webzen\Huxley');
-end;
-
+// Game paths reach 110 characters under the folder, and the launcher works within 260.
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  if (CurPageID = wpSelectDir) and
-     not FileExists(AddBackslash(WizardDirValue) + 'Binaries\HuxleyMMOGame.exe') then
+  if (CurPageID = wpSelectDir) and (Length(WizardDirValue) > 140) then
   begin
-    MsgBox('This folder has no Binaries\HuxleyMMOGame.exe.' + #13#10#13#10 +
-           'Pick your Huxley folder (the clean US Huxley client), the one that contains Binaries.',
+    MsgBox('This folder path is too long for the game. Pick a shorter one, for example C:\Games\Lunarite.',
            mbError, MB_OK);
     Result := False;
   end;

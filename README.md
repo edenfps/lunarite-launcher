@@ -8,11 +8,13 @@ the game.
 
 Download from the [latest release](https://github.com/edenfps/lunarite-launcher/releases/latest):
 
-- `LunariteLauncher-win-Setup.exe`: installs the launcher into your Huxley folder (the one with
-  `Binaries`), with shortcuts and an uninstaller.
-- `LunariteLauncher-win-Portable.zip`: the same files; unzip them into your Huxley folder.
+- `LunariteLauncher-win-Setup.exe`: installs the launcher (default `C:\Games\Lunarite`) with
+  shortcuts and an uninstaller.
+- `LunariteLauncher-win-Portable.zip`: the same files; unzip them into an empty folder.
 
-Then run `WZLauncher.exe` (or the Lunarite Launcher shortcut).
+Then run `WZLauncher.exe` (or the Lunarite Launcher shortcut). The first start downloads the whole
+game, about 22 GB, into the launcher's folder; no existing Huxley install is needed. Keep the folder
+path short (under about 140 characters).
 
 ## Build
 

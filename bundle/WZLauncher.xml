@@ -101,7 +101,7 @@
       <Account></Account>
       <Password></Password>
       <Port>{PORT}</Port>
-      <PacketSize>4096</PacketSize>
+      <PacketSize>262144</PacketSize>
       <ResumeDownloadedFiles>false</ResumeDownloadedFiles>
     </UpdateServerInfo>
   </LauncherUI>
@@ -137,7 +137,7 @@
         <Account></Account>
         <Password></Password>
         <Port>{PORT}</Port>
-        <PacketSize>4096</PacketSize>
+        <PacketSize>262144</PacketSize>
         <ResumeDownloadedFiles>false</ResumeDownloadedFiles>
       </UpdateServerInfo>
     </Game>
