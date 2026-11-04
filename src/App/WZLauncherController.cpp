@@ -768,6 +768,18 @@ DWORD WZLauncherController::ExecuteGame()
     exec.lpDirectory = path->RootDir;
     exec.nShow = SW_SHOW;
 
+    // Lunarite: start the game DPI-aware, as the Properties > Compatibility "Override high DPI
+    // scaling behavior: Application" box does, so resolutions are real pixels on scaled desktops.
+    // The compatibility layer is inherited by the game process only; no setting is written.
+    wchar_t layers[512] = {};
+    GetEnvironmentVariableW(L"__COMPAT_LAYER", layers, 512);
+    if (!wcsstr(layers, L"HighDpiAware"))
+    {
+        wchar_t updated[512] = {};
+        WZStrPrintf(updated, 512, layers[0] ? L"%s HighDpiAware" : L"%sHighDpiAware", layers);
+        SetEnvironmentVariableW(L"__COMPAT_LAYER", updated);
+    }
+
     if (ShellExecuteExW(&exec))
     {
         WZLog(L"Execute Game Success");
