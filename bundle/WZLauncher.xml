@@ -1,0 +1,145 @@
+<Configuration>
+  <LauncherUI>
+    <MainWindow>
+      <Language>English</Language>
+      <BackgroundImage>LauncherImage\\MainFrame.BMP</BackgroundImage>
+      <BackgroundMask enable="true" color="16711935" />
+      <UsePurpleLauncher enable="false" />
+      <Icon>LauncherImage\\HuxleyTheDistopia.ico</Icon>
+      <Title font="Tahoma" color="16777215">Huxley The Dystopia</Title>
+      <Static font="Tahoma" color="16777215" />
+    </MainWindow>
+    <Buttons>
+      <Button name="Update" enable="False">
+        <Position x="638" y="351" />
+        <BackgroundImage>LauncherImage\update.bmp</BackgroundImage>
+      </Button>
+      <Button name="Stop" enable="False">
+        <Position x="638" y="351" />
+        <BackgroundImage>LauncherImage\stop.bmp</BackgroundImage>
+      </Button>
+      <Button name="Execute" enable="True">
+        <Position x="628" y="505" />
+        <BackgroundImage>LauncherImage\StartButton.BMP</BackgroundImage>
+      </Button>
+      <Button name="Install" enable="False">
+        <Position x="638" y="351" />
+        <BackgroundImage>LauncherImage\install.bmp</BackgroundImage>
+      </Button>
+      <Button name="Configuration" enable="False">
+        <Position x="0" y="0" />
+        <BackgroundImage></BackgroundImage>
+      </Button>
+      <Button name="Minimize" enable="True">
+        <Position x="732" y="32" />
+        <BackgroundImage>LauncherImage\Minimize.BMP</BackgroundImage>
+      </Button>
+      <Button name="Exit" enable="True">
+        <Position x="752" y="32" />
+        <BackgroundImage>LauncherImage\Close.BMP</BackgroundImage>
+      </Button>
+    </Buttons>
+    <Controls>
+      <Control name="TotalStatic" enable="True">
+        <Position x="85" y="550" />
+        <Size width="543" height="14" />
+      </Control>
+      <Control name="FileStatic" enable="True">
+        <Position x="85" y="525" />
+        <Size width="540" height="14" />
+      </Control>
+      <Control name="TotalProgressBar" enable="True">
+        <Position x="84" y="567" />
+        <Size width="541" height="6" />
+        <BackgroundImage>LauncherImage\ApplyBar.bmp</BackgroundImage>
+      </Control>
+      <Control name="FileProgressBar" enable="True">
+        <Position x="84" y="539" />
+        <Size width="541" height="6" />
+        <BackgroundImage>LauncherImage\ApplyBar.bmp</BackgroundImage>
+      </Control>
+      <Control name="Web" enable="True">
+        <Position x="27" y="67" />
+        <Size width="734" height="418" />
+      </Control>
+      <Control name="GameList" enable="False">
+        <Position x="0" y="0" />
+        <Size width="0" height="0" />
+        <LineHeight>0</LineHeight>
+      </Control>
+      <Control name="TitleStatic" enable="True">
+        <Position x="40" y="37" />
+        <Size width="300" height="20" />
+      </Control>
+      <Control name="AutoExecutableCheckBox" enable="False">
+        <Position x="638" y="281" />
+        <BackgroundImage>LauncherImage\Check.bmp</BackgroundImage>
+        <BackgroundImage2>LauncherImage\Uncheck.bmp</BackgroundImage2>
+      </Control>
+    </Controls>
+    <Descriptions>
+      <UpdateRequired>An update is required.</UpdateRequired>
+      <UpdateCompleted>Your game is up to date. Press Start.</UpdateCompleted>
+      <UnknownVersion>Checking your game files.</UnknownVersion>
+      <DownloadingFiles>Downloading files.</DownloadingFiles>
+      <ErrorDownloadingFiles>Could not download the files. Is the server online?</ErrorDownloadingFiles>
+      <PatchingFiles>Patching files.</PatchingFiles>
+      <ErrorPatchingFiles>Could not patch the files.</ErrorPatchingFiles>
+      <CheckingFiles>Checking files.</CheckingFiles>
+      <ErrorCheckingFiles>Could not check the files.</ErrorCheckingFiles>
+      <InstallRequired>Put the launcher in your Huxley folder (next to Binaries).</InstallRequired>
+      <ErrorNetwork>Cannot reach the update server. Is it online, and are you on the right network?</ErrorNetwork>
+      <RunOnTheHomepage>The launcher configuration could not be read.</RunOnTheHomepage>
+    </Descriptions>
+    <VersionAndRegistryInfo>
+      <VersionFile>huxley/Patch/Korea/Service/City/LauncherVersion.txt</VersionFile>
+      <PatcherDllFile>ZlibAdapter.dll</PatcherDllFile>
+    </VersionAndRegistryInfo>
+    <UpdateServerInfo>
+      <Protocol>HTTP</Protocol>
+      <ServerURL>{SERVER}</ServerURL>
+      <Account></Account>
+      <Password></Password>
+      <Port>{PORT}</Port>
+      <PacketSize>4096</PacketSize>
+      <ResumeDownloadedFiles>false</ResumeDownloadedFiles>
+    </UpdateServerInfo>
+  </LauncherUI>
+  <Games>
+    <Game name="Huxley_ko" guid="1">
+      <UIInfo>
+        <ListIndex>0</ListIndex>
+        <ListImage></ListImage>
+        <ListIcon></ListIcon>
+        <InstallURL></InstallURL>
+        <WebURL>{WEBURL}</WebURL>
+        <GameOptionDll></GameOptionDll>
+      </UIInfo>
+      <VersionAndRegistryInfo>
+        <VersionFile>huxley/Patch/Korea/Service/City/Version_2.txt</VersionFile>
+        <PatcherDllFile>RTPatchAdapter.dll</PatcherDllFile>
+        <UseCheckFiles>true</UseCheckFiles>
+        <CheckListFileName>huxley/Full/Korea/Service/City/FullFile.txt</CheckListFileName>
+        <RegistryPath>Software\Webzen\HuxleyTheDystopia</RegistryPath>
+        <RegistryKey>HKEY_CURRENT_USER</RegistryKey>
+        <RegistryValue>EXE</RegistryValue>
+        <ExecutionFile>HuxleyMMOGame.exe</ExecutionFile>
+        <GameRootValue>PATH</GameRootValue>
+        <DownloadTempFolder>DownloadTemp</DownloadTempFolder>
+        <UseNetTest>false</UseNetTest>
+        <NetTestDownloadFile>huxley/Patch/Korea/Service/City/NetTestDummyFile.dmy</NetTestDownloadFile>
+        <NetTestResultSaveValue>NPT</NetTestResultSaveValue>
+        <RemoveFiles>HuxleyMMOGame\Content\UI\HuxleyMMOUISkin_kor.upk</RemoveFiles>
+      </VersionAndRegistryInfo>
+      <UpdateServerInfo>
+        <Protocol>HTTP</Protocol>
+        <ServerURL>{SERVER}</ServerURL>
+        <Account></Account>
+        <Password></Password>
+        <Port>{PORT}</Port>
+        <PacketSize>4096</PacketSize>
+        <ResumeDownloadedFiles>false</ResumeDownloadedFiles>
+      </UpdateServerInfo>
+    </Game>
+  </Games>
+</Configuration>
