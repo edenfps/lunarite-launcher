@@ -20,7 +20,7 @@
       </Button>
       <Button name="Execute" enable="True">
         <Position x="628" y="505" />
-        <BackgroundImage>LauncherImage\StartButton.BMP</BackgroundImage>
+        <BackgroundImage>LauncherImage\StartButton_en.BMP</BackgroundImage>
       </Button>
       <Button name="Install" enable="False">
         <Position x="638" y="351" />
