@@ -1,5 +1,6 @@
 #include "FileDownloader.h"
 #include "PathUtil.h"
+#include "Common/Log.h"
 #include <process.h>
 #include <vector>
 
@@ -222,55 +223,142 @@ WZResult FileDownloader::TransferRemoteFile()
 // ---------------------------------------------------------------- FileDownloadManager
 
 FileDownloadManager::FileDownloadManager(IUpdaterStateEvent* listener)
-    : breakFlag(0), current(nullptr), m_listener(listener)
+    : breakFlag(0), m_listener(listener), m_files(nullptr), m_server(nullptr), m_next(0), m_doneBytes(0)
 {
+    InitializeCriticalSection(&m_lock);
+    InitializeCriticalSection(&m_activeLock);
 }
 
 FileDownloadManager::~FileDownloadManager()
 {
-    delete current;
-    current = nullptr;
+    DeleteCriticalSection(&m_activeLock);
+    DeleteCriticalSection(&m_lock);
 }
 
 void FileDownloadManager::Break()
 {
     breakFlag = 1;
-    if (current)
-        current->breakFlag = 1;
+    EnterCriticalSection(&m_activeLock);
+    for (FileDownloader* downloader : m_active)
+        downloader->breakFlag = 1;
+    LeaveCriticalSection(&m_activeLock);
 }
 
 WZResult FileDownloadManager::DownloadFiles(std::vector<FileInfo*>& files, UpdateServerInfo* server)
 {
-    for (FileInfo* file : files)
+    m_files = &files;
+    m_server = server;
+    m_next = 0;
+    m_doneBytes = 0;
+    m_inFlight.clear();
+    m_result.SetSuccess();
+
+    // WinINet allows 2 connections per HTTP/1.1 server and 4 per HTTP/1.0 server by default.
+    DWORD connections = DownloadThreads;
+    InternetSetOptionW(nullptr, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &connections, sizeof(connections));
+    InternetSetOptionW(nullptr, INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER, &connections, sizeof(connections));
+
+    std::vector<HANDLE> workers;
+    for (int i = 0; i < DownloadThreads; ++i)
     {
+        uintptr_t thread = _beginthreadex(nullptr, 0, WorkerProc, this, 0, nullptr);
+        if (thread != 0 && thread != static_cast<uintptr_t>(-1))
+            workers.push_back(reinterpret_cast<HANDLE>(thread));
+    }
+    if (workers.empty())
+        Worker();
+    for (HANDLE worker : workers)
+    {
+        WaitForSingleObject(worker, INFINITE);
+        CloseHandle(worker);
+    }
+    if (breakFlag && m_result.IsSuccess())
+        m_result.Set(1, 0, L"[FileDownloadManager] User Break");
+    return m_result;
+}
+
+unsigned __stdcall FileDownloadManager::WorkerProc(void* self)
+{
+    static_cast<FileDownloadManager*>(self)->Worker();
+    return 0;
+}
+
+// Takes the next file until the list is done, the user breaks, or another file failed for good.
+void FileDownloadManager::Worker()
+{
+    for (;;)
+    {
+        LONG index = InterlockedIncrement(&m_next) - 1;
+        if (breakFlag || index >= static_cast<LONG>(m_files->size()))
+            return;
+        FileInfo* file = (*m_files)[index];
         if (!file)
             continue;
-        current = new FileDownloader(this, server, file);
-        m_result = current->Download();
-        delete current;
-        current = nullptr;
-        if (breakFlag)
-            m_result.Set(1, 0, L"[FileDownloadManager] User Break");
-        if (m_result.code || m_result.subCode)
-            return m_result;
+        WZResult result;
+        for (int attempt = 1; attempt <= DownloadAttempts && !breakFlag; ++attempt)
+        {
+            FileDownloader downloader(this, m_server, file);
+            EnterCriticalSection(&m_activeLock);
+            m_active.insert(&downloader);
+            LeaveCriticalSection(&m_activeLock);
+            result = downloader.Download();
+            EnterCriticalSection(&m_activeLock);
+            m_active.erase(&downloader);
+            LeaveCriticalSection(&m_activeLock);
+            if (result.IsSuccess() || breakFlag)
+                break;
+            WZLog(L"Download attempt %d of %s failed: %X %s", attempt, file->name, result.code, result.message);
+            Sleep(1000 * attempt);
+        }
+        FileFinished(file, result);
+        if (!result.IsSuccess())
+        {
+            // The update stops on a failed file, as it did with one file at a time.
+            breakFlag = 1;
+            Break();
+            return;
+        }
     }
-    return m_result;
+}
+
+void FileDownloadManager::FileFinished(const FileInfo* file, const WZResult& result)
+{
+    EnterCriticalSection(&m_lock);
+    m_inFlight.erase(file);
+    if (result.IsSuccess())
+        m_doneBytes += file->size;
+    else if (m_result.IsSuccess())
+        m_result = result;
+    if (m_listener)
+        m_listener->OnDownloadEnd(result);
+    LeaveCriticalSection(&m_lock);
 }
 
 void FileDownloadManager::OnStart(const FileInfo* file, unsigned __int64 size)
 {
+    EnterCriticalSection(&m_lock);
+    m_inFlight[file] = 0;
     if (m_listener)
         m_listener->OnDownloadStart(file, size);
+    LeaveCriticalSection(&m_lock);
 }
 
 void FileDownloadManager::OnProgress(const FileInfo* file, unsigned __int64 done)
 {
+    EnterCriticalSection(&m_lock);
+    m_inFlight[file] = done;
+    unsigned __int64 total = m_doneBytes;
+    for (const auto& entry : m_inFlight)
+        total += entry.second;
     if (m_listener)
+    {
+        m_listener->OnDownloadTotal(total);
         m_listener->OnDownloadProgress(file, done);
+    }
+    LeaveCriticalSection(&m_lock);
 }
 
+// A file's End goes out from FileFinished, once its retries are over.
 void FileDownloadManager::OnEnd(WZResult result)
 {
-    if (m_listener)
-        m_listener->OnDownloadEnd(result);
 }

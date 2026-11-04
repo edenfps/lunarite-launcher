@@ -67,6 +67,7 @@ public:
     virtual void OnCheckFilesProgress(int total, int current);
     virtual void OnCheckFilesEnd(WZResult result, int fileCount,
                                           unsigned __int64 downloadSize);
+    virtual void OnDownloadTotal(unsigned __int64 doneBytes);
 
     SettingManager& Settings() { return m_settings; }
     CommonInfo*     GetCommonInfo() { return m_settings.GetCommonInfo(); }
@@ -121,4 +122,9 @@ public:
     DWORD       m_totalFiles;
     DWORD       m_curFileIndex;
     MsgSender   m_msg;
+    // Lunarite: several files download at once. The file line shows the newest one; the total
+    // comes from OnDownloadTotal (all files' bytes so far), ~0 when no download reported one.
+    const FileInfo* m_curFile;
+    ULONGLONG   m_curFileBytes;
+    ULONGLONG   m_downloadTotal;
 };

@@ -6,6 +6,8 @@
 
 // FullFile.txt (PatcherInfo::checkListRemote, downloaded to PatcherInfo::checkListLocal) has one
 // line per installed file:   "relative/path" <size> <CRC32 in %X form>\r\n
+// Lunarite: CRCs are cached in <game root>\WZLauncher.crc by size and last-write time, so a check
+// only reads files that changed since the last one (the stock check read the whole 23 GB game).
 class CFileCheckerManager
 {
 public:

@@ -1,9 +1,58 @@
 #include "FileCheckerManager.h"
 #include "PathUtil.h"
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cwchar>
 #include <fstream>
+#include <string>
+#include <unordered_map>
+
+namespace
+{
+    struct CachedCrc
+    {
+        unsigned __int64 size;
+        unsigned __int64 writeTime;
+        DWORD crc;
+    };
+    typedef std::unordered_map<std::wstring, CachedCrc> CrcCache;
+
+    // One line per file: <size> <last-write FILETIME> <CRC %X> <relative path>
+    void LoadCrcCache(const wchar_t* path, CrcCache& cache)
+    {
+        FILE* in = nullptr;
+        if (_wfopen_s(&in, path, L"rt, ccs=UTF-8") != 0 || !in)
+            return;
+        wchar_t line[400];
+        while (fgetws(line, 400, in))
+        {
+            CachedCrc entry = {};
+            int consumed = 0;
+            if (swscanf_s(line, L"%llu %llu %lX %n", &entry.size, &entry.writeTime, &entry.crc, &consumed) < 3 || !consumed)
+                continue;
+            std::wstring name = line + consumed;
+            while (!name.empty() && (name.back() == L'\n' || name.back() == L'\r'))
+                name.pop_back();
+            if (!name.empty())
+                cache[name] = entry;
+        }
+        fclose(in);
+    }
+
+    void SaveCrcCache(const wchar_t* path, const CrcCache& cache)
+    {
+        std::wstring temp = std::wstring(path) + L".tmp";
+        FILE* out = nullptr;
+        if (_wfopen_s(&out, temp.c_str(), L"wt, ccs=UTF-8") != 0 || !out)
+            return;
+        for (const auto& entry : cache)
+            fwprintf(out, L"%llu %llu %lX %s\n", entry.second.size, entry.second.writeTime, entry.second.crc,
+                     entry.first.c_str());
+        fclose(out);
+        MoveFileExW(temp.c_str(), path, MOVEFILE_REPLACE_EXISTING);
+    }
+}
 
 CFileCheckerManager::CFileCheckerManager(IUpdaterStateEvent* listener) : breakFlag(0)
 {
@@ -80,6 +129,13 @@ bool CFileCheckerManager::CheckFullFiles(unsigned __int64* totalSize, PatcherInf
     if (!in.is_open())
         return false;
 
+    wchar_t cachePath[260] = {};
+    WZStrPrintf(cachePath, 260, L"%sWZLauncher.crc", root);
+    CrcCache cache, seen;
+    LoadCrcCache(cachePath, cache);
+    DWORD table[256];
+    PathUtil::BuildCrcTable(table);
+
     int index = 0;
     while (!in.eof() && !breakFlag)
     {
@@ -111,12 +167,23 @@ bool CFileCheckerManager::CheckFullFiles(unsigned __int64* totalSize, PatcherInf
             WZStrPrintf(local, 260, L"%s%s", root, path);
             PathUtil::ToBackslash(local);
 
-            bool mismatch = PathUtil::GetFileSize64(local) != size;
+            WIN32_FILE_ATTRIBUTE_DATA attributes = {};
+            bool exists = GetFileAttributesExW(local, GetFileExInfoStandard, &attributes) != 0;
+            unsigned __int64 localSize = exists
+                ? (static_cast<unsigned __int64>(attributes.nFileSizeHigh) << 32) | attributes.nFileSizeLow : 0;
+            unsigned __int64 writeTime = exists
+                ? (static_cast<unsigned __int64>(attributes.ftLastWriteTime.dwHighDateTime) << 32)
+                    | attributes.ftLastWriteTime.dwLowDateTime : 0;
+            bool mismatch = !exists || localSize != size;
             if (!mismatch)
             {
-                DWORD table[256];
-                PathUtil::BuildCrcTable(table);
-                DWORD crc = PathUtil::FileCrc32(local, table);
+                DWORD crc;
+                auto cached = cache.find(path);
+                if (cached != cache.end() && cached->second.size == localSize && cached->second.writeTime == writeTime)
+                    crc = cached->second.crc;
+                else
+                    crc = PathUtil::FileCrc32(local, table);
+                seen[path] = CachedCrc{ localSize, writeTime, crc };
                 wchar_t actual[260] = {};
                 WZStrPrintf(actual, 260, L"%X", crc);
                 mismatch = _wcsicmp(crcText, actual) != 0;
@@ -136,5 +203,7 @@ bool CFileCheckerManager::CheckFullFiles(unsigned __int64* totalSize, PatcherInf
         }
     }
     in.close();
+    if (!breakFlag)
+        SaveCrcCache(cachePath, seen);
     return true;
 }

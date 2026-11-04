@@ -1,5 +1,7 @@
 // FileDownloader.h - FileDownloader (single file) and FileDownloadManager (file list).
 #pragma once
+#include <map>
+#include <set>
 #include <vector>
 #include "Connecter.h"
 
@@ -38,9 +40,15 @@ private:
 };
 
 // Object size 0x81C. Vtable. Downloads every FileInfo in a list, forwarding events.
+// Lunarite: several files at once (DownloadThreads workers), because one file per connection at a
+// time over a long or lossy path left most of the line idle. Events reach the listener one at a
+// time; a file's End is sent once it finished (after retries).
 class FileDownloadManager : public IDownloaderStateEvent
 {
 public:
+    static const int DownloadThreads = 6;
+    static const int DownloadAttempts = 3;
+
     explicit FileDownloadManager(IUpdaterStateEvent* listener);
     ~FileDownloadManager();
 
@@ -52,9 +60,21 @@ public:
     void OnEnd(WZResult result) override;
 
     volatile LONG   breakFlag;
-    FileDownloader* current;
 
 private:
+    static unsigned __stdcall WorkerProc(void* self);
+    void Worker();
+    void FileFinished(const FileInfo* file, const WZResult& result);
+
     WZResult            m_result;
     IUpdaterStateEvent* m_listener;
+    CRITICAL_SECTION    m_lock;                                 // listener events and byte counts
+    CRITICAL_SECTION    m_activeLock;                           // m_active only: Break comes from the
+                                                                // UI thread, which m_lock may be waiting on
+    std::vector<FileInfo*>* m_files;
+    UpdateServerInfo*   m_server;
+    volatile LONG       m_next;
+    unsigned __int64    m_doneBytes;                            // finished files
+    std::map<const FileInfo*, unsigned __int64> m_inFlight;     // bytes of files still downloading
+    std::set<FileDownloader*> m_active;                         // for Break
 };

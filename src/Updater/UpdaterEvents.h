@@ -36,6 +36,9 @@ public:
     virtual void OnCheckFilesProgress(int total, int current) = 0;                      // [13]
     virtual void OnCheckFilesEnd(WZResult result, int fileCount,
                                  unsigned __int64 totalSize) = 0;                       // [14]
+    // Lunarite addition: bytes downloaded so far across all files, finished and in flight, while
+    // FileDownloadManager downloads several files at once.
+    virtual void OnDownloadTotal(unsigned __int64 doneBytes) {}
 };
 
 // Implemented by FileDownloadManager (vtable).

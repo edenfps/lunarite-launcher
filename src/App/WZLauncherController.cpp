@@ -121,6 +121,9 @@ WZLauncherController::WZLauncherController()
     , m_curFileSize(0)
     , m_totalFiles(0)
     , m_curFileIndex(0)
+    , m_curFile(nullptr)
+    , m_curFileBytes(0)
+    , m_downloadTotal(~0ull)
 {
     memset(m_logPath, 0, sizeof(m_logPath));
     memset(m_gameName, 0, sizeof(m_gameName));
@@ -868,7 +871,8 @@ void WZLauncherController::UpdateFileProgress(const wchar_t* text, const wchar_t
         if (!patching)
             OutputDebugStringW(buf);
 
-        int totalPercent = (int)((100 * (bytes + m_doneSize)) / m_totalSize) / divisor;
+        ULONGLONG done = (!patching && m_downloadTotal != ~0ull) ? m_downloadTotal : bytes + m_doneSize;
+        int totalPercent = (int)((100 * done) / m_totalSize) / divisor;
         m_msg.SetUpdateProgress(totalPercent);
 
         memset(buf, 0, sizeof(buf));
@@ -930,6 +934,9 @@ void WZLauncherController::OnCheckVersionEnd(WZResult result, int fileCount, uns
         m_curFileSize = 0;
         m_totalFiles = fileCount;
         m_curFileIndex = 0;
+        m_curFile = nullptr;
+        m_curFileBytes = 0;
+        m_downloadTotal = ~0ull;
         m_msg.SetFileCount(0, m_totalFiles);
         m_msg.SetFileStatic(L"");
         m_msg.SetTotalStatic(L"");
@@ -954,32 +961,37 @@ void WZLauncherController::OnDownloadStart(const FileInfo* file, unsigned __int6
 
     WZStrCopy(m_curFileName, 260, fileName);
     m_curFileSize = size;
+    m_curFile = file;
+    m_curFileBytes = 0;
 
     wchar_t shortName[260] = {};
     WZStrCopy(shortName, 260, fileName);
     StripToFileName(shortName);
     UpdateFileProgress(strings->GetString(DESC_DOWNLOADING_FILES), shortName, 0, false);
 
-    WZLog(L"%d. Started Download File - FileName : %s, FileLength : %d bytes",
-          m_curFileIndex + 1, fileName, (DWORD)size);
+    WZLog(L"Started Download File - FileName : %s, FileLength : %d bytes", fileName, (DWORD)size);
 }
 
+// Several files download at once: the file line follows the newest one, the bar the total.
 void WZLauncherController::OnDownloadProgress(const FileInfo* file, unsigned __int64 bytes)
 {
-    const wchar_t* fileName = file->name;
     CStringInfo* strings = m_settings.GetStringInfo();
 
-    wchar_t shortName[260] = {};
-    WZStrCopy(shortName, 260, fileName);
-    StripToFileName(shortName);
-    UpdateFileProgress(strings->GetString(DESC_DOWNLOADING_FILES), shortName, bytes, false);
+    if (file == m_curFile)
+        m_curFileBytes = bytes;
+    UpdateFileProgress(strings->GetString(DESC_DOWNLOADING_FILES), m_curFileName, m_curFileBytes, false);
+}
+
+void WZLauncherController::OnDownloadTotal(unsigned __int64 doneBytes)
+{
+    m_downloadTotal = doneBytes;
 }
 
 void WZLauncherController::OnDownloadEnd(WZResult result)
 {
     CStringInfo* strings = m_settings.GetStringInfo();
 
-    m_doneSize += m_curFileSize;
+    m_doneSize = m_downloadTotal != ~0ull ? m_downloadTotal : m_doneSize + m_curFileSize;
     ++m_curFileIndex;
     m_msg.SetFileCount(m_curFileIndex, m_totalFiles);
     if (result.code || result.subCode)
@@ -1085,6 +1097,9 @@ void WZLauncherController::OnCheckFilesEnd(WZResult result, int fileCount, unsig
         m_curFileSize = 0;
         m_totalFiles = fileCount;
         m_curFileIndex = 0;
+        m_curFile = nullptr;
+        m_curFileBytes = 0;
+        m_downloadTotal = ~0ull;
         m_msg.SetFileCount(0, m_totalFiles);
         m_msg.SetFileStatic(L"");
         SendMessageW(GetLauncherMainWnd(), WM_WZ_SETTOTALSTATIC, (WPARAM)L"", 0);
