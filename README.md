@@ -19,6 +19,10 @@ path short (under about 140 characters).
 On a Korean Windows the launcher, its news page and the game are in Korean; elsewhere English. Set
 the environment variable `LUNARITE_LANGUAGE` to `ko` or `en` to choose yourself.
 
+The launcher starts the game DPI-aware (like the Compatibility tab's "Override high DPI scaling
+behavior: Application"), so resolution changes work on scaled desktops. Game updates arrive by
+themselves: when the server's files change, the next launch downloads only the changed files.
+
 ## Build
 
 Needs Visual Studio with the C++ desktop tools (x86).
