@@ -49,7 +49,9 @@ Name: "{autodesktop}\Lunarite Launcher"; Filename: "{app}\WZLauncher.exe"; Worki
 [Run]
 ; Not under Wine/Proton: Steam ends a shortcut's session when its program (this setup) exits, which
 ; takes a launcher started from here down with it. The finished page says what to run instead.
-Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; Description: "Start the launcher"; Flags: nowait postinstall skipifsilent; Check: not IsWine
+; shellexec: WZLauncher.exe asks for administrator rights and this setup runs without them, so a plain
+; CreateProcess fails with error 740; ShellExecute shows the UAC prompt instead.
+Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; Description: "Start the launcher"; Flags: nowait postinstall skipifsilent shellexec; Check: not IsWine
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\Binaries"
