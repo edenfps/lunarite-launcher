@@ -47,7 +47,9 @@ class FileDownloadManager : public IDownloaderStateEvent
 {
 public:
     static const int DownloadThreads = 6;
-    static const int DownloadAttempts = 3;
+    // Enough to ride out a server restart (about a minute) or a short network drop: waits of 5, 10,
+    // ... up to 30 seconds between attempts, about 2.5 minutes in all.
+    static const int DownloadAttempts = 8;
 
     explicit FileDownloadManager(IUpdaterStateEvent* listener);
     ~FileDownloadManager();

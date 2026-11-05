@@ -308,7 +308,8 @@ void FileDownloadManager::Worker()
             if (result.IsSuccess() || breakFlag)
                 break;
             WZLog(L"Download attempt %d of %s failed: %X %s", attempt, file->name, result.code, result.message);
-            Sleep(1000 * attempt);
+            for (int waited = 0; waited < (attempt * 5000 < 30000 ? attempt * 5000 : 30000) && !breakFlag; waited += 250)
+                Sleep(250);
         }
         FileFinished(file, result);
         if (!result.IsSuccess())
