@@ -15,7 +15,7 @@ AppId={{D90CE85D-1199-4DF7-94F1-B0BD14A8E5A6}
 AppName=Lunarite Launcher
 AppVersion={#AppVersion}
 AppPublisher=Lunarite
-AppPublisherURL=https://lunarite-website.vercel.app/
+AppPublisherURL=https://huxleythedystopia.com/
 ; Outside Program Files: the game writes its configs and logs into its own folder.
 DefaultDirName={sd}\Games\Lunarite
 DisableProgramGroupPage=yes
