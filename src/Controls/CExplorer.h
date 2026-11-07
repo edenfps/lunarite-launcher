@@ -4,6 +4,19 @@
 #include <atlhost.h>
 #include <exdisp.h>
 
+// Opens links that would pop a new IE window (target="_blank") in the user's default browser.
+class CExplorerEvents : public IDispatch
+{
+public:
+    STDMETHODIMP QueryInterface(REFIID riid, void** ppv) override;
+    STDMETHODIMP_(ULONG) AddRef() override { return 2; }   // lives as long as its CExplorer
+    STDMETHODIMP_(ULONG) Release() override { return 1; }
+    STDMETHODIMP GetTypeInfoCount(UINT* n) override { *n = 0; return S_OK; }
+    STDMETHODIMP GetTypeInfo(UINT, LCID, ITypeInfo**) override { return E_NOTIMPL; }
+    STDMETHODIMP GetIDsOfNames(REFIID, LPOLESTR*, UINT, LCID, DISPID*) override { return E_NOTIMPL; }
+    STDMETHODIMP Invoke(DISPID id, REFIID, LCID, WORD, DISPPARAMS* params, VARIANT*, EXCEPINFO*, UINT*) override;
+};
+
 class CExplorer
 {
 public:
@@ -28,4 +41,6 @@ private:
 
     HWND      m_hWnd;
     CAxWindow m_ax;
+    CExplorerEvents m_events;
+    DWORD     m_cookie = 0;
 };
