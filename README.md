@@ -23,9 +23,19 @@ The launcher starts the game DPI-aware (like the Compatibility tab's "Override h
 behavior: Application"), so resolution changes work on scaled desktops. Game updates arrive by
 themselves: when the server's files change, the next launch downloads only the changed files.
 
+### Windows XP
+
+The launcher and the game run on Windows XP (SP3, 32-bit). Use the Portable zip: the Setup needs
+Vista or later. Also install the DirectX End-User Runtime (June 2010), which provides the
+`d3dx9_31.dll` the game needs. With 4 GB of RAM, adding `/3GB` to `boot.ini` gives the game more
+room. The news page may stay blank on XP, which cannot open its HTTPS address; updates and the
+game are unaffected.
+
 ## Build
 
-Needs Visual Studio with the C++ desktop tools (x86).
+Needs Visual Studio with the C++ desktop tools (x86). For a build that also runs on Windows XP, add
+the components "C++ Windows XP Support for VS 2017 (v141) tools" and "C++ ATL for v141 build tools"
+and the Windows 10 SDK 10.0.10240; `build.cmd` uses them when they are installed.
 
 ```
 build.cmd
