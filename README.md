@@ -25,8 +25,8 @@ themselves: when the server's files change, the next launch downloads only the c
 
 ### Windows XP
 
-The launcher and the game run on Windows XP (SP3, 32-bit). Use the Portable zip: the Setup needs
-Vista or later. Also install the DirectX End-User Runtime (June 2010), which provides the
+The launcher, the Setup and the game run on Windows XP (SP3, 32-bit). Also install the DirectX
+End-User Runtime (June 2010), which provides the
 `d3dx9_31.dll` the game needs. With 4 GB of RAM, adding `/3GB` to `boot.ini` gives the game more
 room. The news page may stay blank on XP, which cannot open its HTTPS address; updates and the
 game are unaffected.
@@ -36,6 +36,8 @@ game are unaffected.
 Needs Visual Studio with the C++ desktop tools (x86). For a build that also runs on Windows XP, add
 the components "C++ Windows XP Support for VS 2017 (v141) tools" and "C++ ATL for v141 build tools"
 and the Windows 10 SDK 10.0.10240; `build.cmd` uses them when they are installed.
+The Setup is built with Inno Setup 5.6 when installed (its setups run on XP); Inno Setup 6 also works,
+for Vista and later.
 
 ```
 build.cmd

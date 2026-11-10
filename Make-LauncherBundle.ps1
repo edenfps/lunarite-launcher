@@ -1,7 +1,7 @@
 # Builds the player launcher: WZLauncher.exe, a .wzc pointed at the server's patch server, the files
 # in bundle\ and the helper files from a Huxley install. Output, next to the bundle folder:
 #   LunariteLauncher-win-Portable.zip  unzip into an empty folder; the launcher downloads the game there
-#   LunariteLauncher-win-Setup.exe     installs the launcher with shortcuts (needs Inno Setup 6)
+#   LunariteLauncher-win-Setup.exe     installs the launcher with shortcuts (Inno Setup 5.6 for Windows XP support, or 6)
 param(
     [Parameter(Mandatory)] [string] $Server,          # address players reach the server at
     [int] $Port = 8090,                               # the patch server's port
@@ -82,9 +82,12 @@ if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
 Compress-Archive -Path (Join-Path $Output '*') -DestinationPath $zip
 Write-Output "Portable: $zip"
 
-$iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+# Inno Setup 5.6 first: its setups also run on Windows XP (Inno Setup 6 setups need Vista or later).
+$iscc = @("${env:ProgramFiles(x86)}\Inno Setup 5\ISCC.exe", "$env:ProgramFiles\Inno Setup 5\ISCC.exe",
+    "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
     "$env:ProgramFiles\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-if (-not $iscc) { Write-Warning 'Inno Setup 6 not found; skipped the Setup.exe.'; return }
+if (-not $iscc) { Write-Warning 'Inno Setup not found; skipped the Setup.exe.'; return }
+if ($iscc -notlike '*Inno Setup 5*') { Write-Warning 'Inno Setup 5 not found: this Setup.exe will not run on Windows XP.' }
 & $iscc /Q "/DAppVersion=$Version" "/DBundleDir=$Output" "/O$dist" (Join-Path $here 'installer\LunariteLauncher.iss')
 if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
 Write-Output "Setup: $(Join-Path $dist 'LunariteLauncher-win-Setup.exe')"

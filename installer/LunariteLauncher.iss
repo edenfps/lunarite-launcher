@@ -9,6 +9,15 @@
 #ifndef BundleDir
   #define BundleDir "..\out\bundle"
 #endif
+; Inno Setup 5.6 builds a setup that also runs on Windows XP; Inno Setup 6 setups need Vista or later.
+; Make-LauncherBundle.ps1 prefers Inno Setup 5. The Inno 6 extras stay for builds without it.
+#if Ver >= EncodeVer(6,0,0)
+  #define Programs "{autoprograms}"
+  #define Desktop "{autodesktop}"
+#else
+  #define Programs "{userprograms}"
+  #define Desktop "{userdesktop}"
+#endif
 
 [Setup]
 AppId={{D90CE85D-1199-4DF7-94F1-B0BD14A8E5A6}
@@ -21,10 +30,14 @@ DefaultDirName={sd}\Games\Lunarite
 DisableProgramGroupPage=yes
 UsePreviousAppDir=yes
 PrivilegesRequired=lowest
+#if Ver >= EncodeVer(6,0,0)
 PrivilegesRequiredOverridesAllowed=commandline dialog
+#endif
 ; The game the launcher downloads, about 22 GB.
 ExtraDiskSpaceRequired=23000000000
+#if Ver >= EncodeVer(6,0,0)
 WizardStyle=modern
+#endif
 SetupIconFile={#BundleDir}\LauncherImage\HuxleyTheDistopia.ico
 UninstallDisplayIcon={app}\WZLauncher.exe
 UninstallDisplayName=Lunarite Launcher
@@ -43,8 +56,8 @@ Name: desktopicon; Description: "Create a desktop shortcut"; GroupDescription: "
 Source: "{#BundleDir}\*"; DestDir: "{app}"; Excludes: "README.txt"; Flags: ignoreversion recursesubdirs
 
 [Icons]
-Name: "{autoprograms}\Lunarite Launcher"; Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; IconFilename: "{app}\LauncherImage\HuxleyTheDistopia.ico"
-Name: "{autodesktop}\Lunarite Launcher"; Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; IconFilename: "{app}\LauncherImage\HuxleyTheDistopia.ico"; Tasks: desktopicon
+Name: "{#Programs}\Lunarite Launcher"; Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; IconFilename: "{app}\LauncherImage\HuxleyTheDistopia.ico"
+Name: "{#Desktop}\Lunarite Launcher"; Filename: "{app}\WZLauncher.exe"; WorkingDir: "{app}"; IconFilename: "{app}\LauncherImage\HuxleyTheDistopia.ico"; Tasks: desktopicon
 
 [Run]
 ; Not under Wine/Proton: Steam ends a shortcut's session when its program (this setup) exits, which
