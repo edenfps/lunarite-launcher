@@ -10,6 +10,34 @@
 
 namespace
 {
+    // Windows XP and Vista can't open the news page's https site (its host needs TLS 1.2, which their Internet
+    // Explorer lacks), so the panel showed "Navigation to the webpage was canceled". There the page comes from the
+    // update server over plain HTTP instead: same file name, at http://<ServerURL>:<Port>/ (the Lunarite patch server
+    // serves a copy of the site's launcher page and its images there).
+    bool OldInternetExplorer()
+    {
+        OSVERSIONINFOW os = { sizeof(os) };
+#pragma warning(suppress : 4996)
+        if (!GetVersionExW(&os))
+            return false;
+        return os.dwMajorVersion < 6 || (os.dwMajorVersion == 6 && os.dwMinorVersion == 0);
+    }
+
+    std::wstring WebUrlFor(GameEntry* entry)
+    {
+        if (!entry || !entry->ui)
+            return std::wstring();
+        std::wstring url = entry->ui->WebURL;
+        UpdateServerInfo* server = entry->update ? entry->update->Server : nullptr;
+        if (url.compare(0, 8, L"https://") != 0 || !server || !server->ServerURL[0] || !OldInternetExplorer())
+            return url;
+        size_t slash = url.find_last_of(L'/');
+        std::wstring page = slash == std::wstring::npos ? std::wstring() : url.substr(slash + 1);
+        if (page.empty())
+            page = L"launcher.html";
+        return std::wstring(L"http://") + server->ServerURL + L":" + std::to_wstring(server->Port) + L"/" + page;
+    }
+
     // ensure a trailing backslash.
     void AddBackslash(wchar_t* path)
     {
@@ -243,8 +271,8 @@ bool WZLauncherController::Initialize()
 void WZLauncherController::Start()
 {
     GameEntry* entry = m_settings.FindGame(m_gameName);
-    const wchar_t* webUrl = entry ? entry->ui->WebURL : nullptr;
-    SendMessageW(GetLauncherMainWnd(), WM_WZ_SETWEBURL, (WPARAM)webUrl, 0);
+    std::wstring webUrl = WebUrlFor(entry);
+    SendMessageW(GetLauncherMainWnd(), WM_WZ_SETWEBURL, (WPARAM)(entry ? webUrl.c_str() : nullptr), 0);
 
     if (!GetCommonInfo()->UsePurpleLauncher)
     {
@@ -614,8 +642,8 @@ bool WZLauncherController::SelectGame(const wchar_t* gameName)
     m_updateState = selected ? selected->Version->State : 0;
 
     GameEntry* current = m_settings.FindGame(m_gameName);
-    const wchar_t* webUrl = current ? current->ui->WebURL : nullptr;
-    SendMessageW(GetLauncherMainWnd(), WM_WZ_SETWEBURL, (WPARAM)webUrl, 0);
+    std::wstring webUrl = WebUrlFor(current);
+    SendMessageW(GetLauncherMainWnd(), WM_WZ_SETWEBURL, (WPARAM)(current ? webUrl.c_str() : nullptr), 0);
 
     m_msg.SetUpdateProgress(0);
     m_msg.SetFileProgress(0);
