@@ -307,6 +307,7 @@ INT_PTR CWZLauncherDlg::HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam)
             case IDC_BTN_EXIT:      OnExitClicked();        return TRUE;
             case IDC_BTN_CONFIG:    OnConfigClicked();      return TRUE;
             case IDC_CHK_AUTOEXEC:  OnAutoExecuteClicked(); return TRUE;
+            case IDC_CHK_DXVK:      OnDxvkClicked();        return TRUE;
             case IDC_BTN_UPDATE:    OnUpdateClicked();      return TRUE;
             case IDC_BTN_EXECUTE:   OnExecuteClicked();     return TRUE;
             case IDC_BTN_STOP:      OnStopClicked();        return TRUE;
@@ -390,6 +391,7 @@ BOOL CWZLauncherDlg::OnInitDialog()
     m_btnExit.SubclassDlgItem(IDC_BTN_EXIT, m_hWnd);
     m_btnConfig.SubclassDlgItem(IDC_BTN_CONFIG, m_hWnd);
     m_btnAutoExecute.SubclassDlgItem(IDC_CHK_AUTOEXEC, m_hWnd);
+    m_btnDxvk.SubclassDlgItem(IDC_CHK_DXVK, m_hWnd);
     m_btnUpdate.SubclassDlgItem(IDC_BTN_UPDATE, m_hWnd);
     m_btnExecute.SubclassDlgItem(IDC_BTN_EXECUTE, m_hWnd);
     m_btnStop.SubclassDlgItem(IDC_BTN_STOP, m_hWnd);
@@ -571,6 +573,32 @@ void CWZLauncherDlg::SetupButtons()
     else
         m_btnAutoExecute.ShowWindow(SW_HIDE);
 
+    // Lunarite: "Vulkan (DXVK)" toggle in the top bar (bitmaps from tools/make_dxvk_checkbox.py, same position).
+    // Shown only where a Vulkan loader exists (none on XP/Vista or without a Vulkan driver).
+    HBITMAP dxvkOn = nullptr, dxvkOff = nullptr;
+    if (WZLauncherController::VulkanAvailable())
+    {
+        wchar_t dir[MAX_PATH] = {}, on[MAX_PATH] = {}, off[MAX_PATH] = {};
+        GetModuleFileNameW(nullptr, dir, MAX_PATH);
+        if (wchar_t* slash = wcsrchr(dir, L'\\')) slash[1] = L'\0';
+        swprintf_s(on, L"%sLauncherImage\\DxvkOn.bmp", dir);
+        swprintf_s(off, L"%sLauncherImage\\DxvkOff.bmp", dir);
+        dxvkOn = (HBITMAP)LoadImageW(nullptr, on, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+        dxvkOff = (HBITMAP)LoadImageW(nullptr, off, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    }
+    if (dxvkOn && dxvkOff)
+    {
+        m_btnDxvk.SetToggleBitmaps(dxvkOn, dxvkOff);
+        m_btnDxvk.MoveWindow(556, 33, 150, 16, TRUE);
+        m_btnDxvk.m_toggled = m_controller.GetUseDxvk();
+    }
+    else
+    {
+        if (dxvkOn) DeleteObject(dxvkOn);
+        if (dxvkOff) DeleteObject(dxvkOff);
+        m_btnDxvk.ShowWindow(SW_HIDE);
+    }
+
     m_btnUpdate.ShowWindow(SW_HIDE);
     m_btnExecute.ShowWindow(SW_HIDE);
     m_btnStop.ShowWindow(SW_HIDE);
@@ -750,6 +778,11 @@ void CWZLauncherDlg::OnConfigClicked()
 void CWZLauncherDlg::OnAutoExecuteClicked()
 {
     m_controller.SetAutoExecute(m_btnAutoExecute.m_toggled);
+}
+
+void CWZLauncherDlg::OnDxvkClicked()
+{
+    m_controller.SetUseDxvk(m_btnDxvk.m_toggled);
 }
 
 void CWZLauncherDlg::OnUpdateClicked()

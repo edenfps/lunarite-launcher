@@ -789,6 +789,7 @@ DWORD WZLauncherController::ExecuteGame()
     GameEntry* entry = m_settings.FindGame(m_gameName);
     PathInfo* path = entry->update->Path;
     RemoveConfiguredFiles(entry);
+    ApplyDxvk(path->ExecutablePath);
 
     SHELLEXECUTEINFOW exec = {};
     exec.cbSize = sizeof(SHELLEXECUTEINFOW);
@@ -843,6 +844,66 @@ void WZLauncherController::SetAutoExecute(BOOL enable)
         WZLog(L"Set Auto Execute : TRUE");
     else
         WZLog(L"Set Auto Execute : FALSE");
+}
+
+void WZLauncherController::SetUseDxvk(BOOL enable)
+{
+    GameEntry* entry = m_settings.FindGame(m_gameName);
+    PathInfo* path = (entry && entry->update) ? entry->update->Path : nullptr;
+    if (path)
+    {
+        DWORD data = (enable != 0);
+        HKEY key;
+        if (RegOpenKeyExW(WZRegRootFromName(path->RegistryRootKey), path->RegistrySubKey, 0, KEY_WRITE, &key) == ERROR_SUCCESS)
+        {
+            RegSetValueExW(key, L"UseDxvk", 0, REG_DWORD, (const BYTE*)&data, sizeof(data));
+            RegCloseKey(key);
+        }
+    }
+    WZLog(enable ? L"Set DXVK : TRUE" : L"Set DXVK : FALSE");
+}
+
+BOOL WZLauncherController::GetUseDxvk()
+{
+    DWORD data = 0;
+    GameEntry* entry = m_settings.FindGame(m_gameName);
+    PathInfo* path = (entry && entry->update) ? entry->update->Path : nullptr;
+    if (path)
+        WZRegReadDword(path->RegistryRootKey, path->RegistrySubKey, L"UseDxvk", &data);
+    return data != 0;
+}
+
+bool WZLauncherController::VulkanAvailable()
+{
+    wchar_t found[MAX_PATH] = {};
+    return SearchPathW(nullptr, L"vulkan-1.dll", nullptr, MAX_PATH, found, nullptr) != 0;
+}
+
+void WZLauncherController::ApplyDxvk(const wchar_t* executablePath)
+{
+    wchar_t dir[MAX_PATH] = {}, source[MAX_PATH] = {}, target[MAX_PATH] = {};
+    WZStrCopy(dir, MAX_PATH, executablePath);
+    TrimPathQuotes(dir);
+    wchar_t* slash = wcsrchr(dir, L'\\');
+    if (!slash)
+        return;
+    slash[1] = L'\0';
+    swprintf_s(source, L"%sdxvk\\d3d9.dll", dir);
+    swprintf_s(target, L"%sd3d9.dll", dir);
+    WIN32_FILE_ATTRIBUTE_DATA src = {}, dst = {};
+    bool haveSource = GetFileAttributesExW(source, GetFileExInfoStandard, &src) != FALSE;
+    bool haveTarget = GetFileAttributesExW(target, GetFileExInfoStandard, &dst) != FALSE;
+    if (GetUseDxvk() && haveSource && VulkanAvailable())
+    {
+        if (!haveTarget || src.nFileSizeLow != dst.nFileSizeLow
+            || CompareFileTime(&src.ftLastWriteTime, &dst.ftLastWriteTime) != 0)
+            WZLog(CopyFileW(source, target, FALSE) ? L"DXVK : on" : L"DXVK : copy failed");
+    }
+    else if (haveTarget && haveSource && src.nFileSizeLow == dst.nFileSizeLow)
+    {
+        // Only our copy is removed; a d3d9.dll the player put there themselves stays.
+        WZLog(DeleteFileW(target) ? L"DXVK : off" : L"DXVK : remove failed");
+    }
 }
 
 BOOL WZLauncherController::GetAutoExecute()

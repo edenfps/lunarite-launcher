@@ -49,6 +49,12 @@ public:
     DWORD ExecuteGame();
     void SetAutoExecute(BOOL enable);
     BOOL GetAutoExecute();
+    // Lunarite: play through DXVK (Vulkan). The payload ships Binaries\dxvk\d3d9.dll; when on, the game start
+    // copies it next to the exe (the game then loads it instead of Windows' d3d9.dll), when off it removes that copy.
+    void SetUseDxvk(BOOL enable);
+    BOOL GetUseDxvk();
+    static bool VulkanAvailable();
+    void ApplyDxvk(const wchar_t* executablePath);
 
     // IUpdaterStateEvent (vtable).
     virtual void OnUpdateBegin();

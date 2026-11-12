@@ -18,6 +18,7 @@
 #define IDC_BTN_CONFIG              1011    // 0x3F3  "Game Config"
 #define IDC_BTN_INSTALL             1012    // 0x3F4  "Install Game"
 #define IDC_CHK_AUTOEXEC            1013    // 0x3F5  "Auto Start Game"
+#define IDC_CHK_DXVK                1014    // Lunarite: "Vulkan (DXVK)" toggle
 
 #ifndef IDC_STATIC
 #define IDC_STATIC                  -1
