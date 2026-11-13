@@ -268,9 +268,15 @@ bool WZLauncherController::Initialize()
     return true;
 }
 
+void StartCrashReport(const wchar_t* host, unsigned short port, const wchar_t* executablePath);
+
 void WZLauncherController::Start()
 {
     GameEntry* entry = m_settings.FindGame(m_gameName);
+    // Lunarite: send the last session's log and minidump when it crashed (CrashReport.cpp).
+    if (entry && entry->update && entry->update->Server && entry->update->Path)
+        StartCrashReport(entry->update->Server->ServerURL, (unsigned short)entry->update->Server->Port,
+                         entry->update->Path->ExecutablePath);
     std::wstring webUrl = WebUrlFor(entry);
     SendMessageW(GetLauncherMainWnd(), WM_WZ_SETWEBURL, (WPARAM)(entry ? webUrl.c_str() : nullptr), 0);
 
