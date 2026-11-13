@@ -132,7 +132,10 @@ bool CFileCheckerManager::CheckFullFiles(unsigned __int64* totalSize, PatcherInf
     wchar_t cachePath[260] = {};
     WZStrPrintf(cachePath, 260, L"%sWZLauncher.crc", root);
     CrcCache cache, seen;
-    LoadCrcCache(cachePath, cache);
+    // Lunarite: after a crashed session every file is re-hashed (CrashReport.cpp).
+    extern bool g_LunariteVerifyAllFiles;
+    if (!g_LunariteVerifyAllFiles)
+        LoadCrcCache(cachePath, cache);
     DWORD table[256];
     PathUtil::BuildCrcTable(table);
 

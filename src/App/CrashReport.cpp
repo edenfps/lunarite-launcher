@@ -8,6 +8,7 @@
 // Sent: the first 64 KB (machine, drivers, settings) and the last 448 KB. The minidump: the newest
 // Binaries\huxley-v*.dmp written during that session. Each log is sent once (its size and write time are kept in
 // HKCU\Software\Lunarite\LastCrashReport). Runs on its own thread; any failure is silently skipped.
+// After a crash the same launch also re-hashes every game file (g_LunariteVerifyAllFiles, FileCheckerManager).
 #include <windows.h>
 #include <wininet.h>
 #include <string>
@@ -192,6 +193,33 @@ namespace
     }
 }
 
+// Set before the file check when the last session crashed: that launch re-hashes every game file instead of
+// trusting WZLauncher.crc (a file damaged in place keeps its size and write time, so the cache would pass it).
+bool g_LunariteVerifyAllFiles = false;
+
+namespace
+{
+    bool LastSessionCrashed(const std::wstring& gameDir)
+    {
+        std::wstring logPath = gameDir + L"..\\HuxleyMMOGame\\Logs\\Launch.log";
+        HANDLE file = CreateFileW(logPath.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                                  OPEN_EXISTING, 0, nullptr);
+        if (file == INVALID_HANDLE_VALUE)
+            return false;
+        BY_HANDLE_FILE_INFORMATION info = {};
+        GetFileInformationByHandle(file, &info);
+        ULONGLONG size = ((ULONGLONG)info.nFileSizeHigh << 32) | info.nFileSizeLow;
+        std::string tail;
+        DWORD tailCount = (DWORD)min(size, (ULONGLONG)kTail);
+        bool crashed = size > 0 && Stamp(size, info.ftLastWriteTime) != LastSent()
+            && ReadRange(file, size - tailCount, tailCount, tail)
+            && (tail.find("=== Critical error: ===") != std::string::npos
+                || tail.find("Log file closed") == std::string::npos);
+        CloseHandle(file);
+        return crashed;
+    }
+}
+
 // executablePath: the game exe (Binaries\HuxleyMMOGame.exe); host/port: the patch server.
 void StartCrashReport(const wchar_t* host, unsigned short port, const wchar_t* executablePath)
 {
@@ -203,7 +231,10 @@ void StartCrashReport(const wchar_t* host, unsigned short port, const wchar_t* e
     size_t slash = exe.find_last_of(L'\\');
     if (slash == std::wstring::npos)
         return;
-    Job* job = new Job{ host, exe.substr(0, slash + 1), (INTERNET_PORT)port };
+    std::wstring gameDir = exe.substr(0, slash + 1);
+    if (LastSessionCrashed(gameDir))
+        g_LunariteVerifyAllFiles = true;
+    Job* job = new Job{ host, gameDir, (INTERNET_PORT)port };
     HANDLE thread = CreateThread(nullptr, 0, Run, job, 0, nullptr);
     if (thread)
         CloseHandle(thread);
