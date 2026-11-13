@@ -846,30 +846,34 @@ void WZLauncherController::SetAutoExecute(BOOL enable)
         WZLog(L"Set Auto Execute : FALSE");
 }
 
+// The DXVK choice is per user (HKCU\Software\Lunarite): the install key is under HKLM, which a launcher without
+// admin rights cannot write, so a choice made once from an elevated launcher (Setup's "Launch now") could never be
+// turned off again. The old HKLM value is ignored, so everyone starts from "off".
+static const wchar_t* kLunariteKey = L"Software\\Lunarite";
+
 void WZLauncherController::SetUseDxvk(BOOL enable)
 {
-    GameEntry* entry = m_settings.FindGame(m_gameName);
-    PathInfo* path = (entry && entry->update) ? entry->update->Path : nullptr;
-    if (path)
+    DWORD data = (enable != 0);
+    HKEY key;
+    LONG result = RegCreateKeyExW(HKEY_CURRENT_USER, kLunariteKey, 0, nullptr, 0, KEY_WRITE, nullptr, &key, nullptr);
+    if (result == ERROR_SUCCESS)
     {
-        DWORD data = (enable != 0);
-        HKEY key;
-        if (RegOpenKeyExW(WZRegRootFromName(path->RegistryRootKey), path->RegistrySubKey, 0, KEY_WRITE, &key) == ERROR_SUCCESS)
-        {
-            RegSetValueExW(key, L"UseDxvk", 0, REG_DWORD, (const BYTE*)&data, sizeof(data));
-            RegCloseKey(key);
-        }
+        result = RegSetValueExW(key, L"UseDxvk", 0, REG_DWORD, (const BYTE*)&data, sizeof(data));
+        RegCloseKey(key);
     }
-    WZLog(enable ? L"Set DXVK : TRUE" : L"Set DXVK : FALSE");
+    WZLog(result != ERROR_SUCCESS ? L"Set DXVK : save failed" : enable ? L"Set DXVK : TRUE" : L"Set DXVK : FALSE");
 }
 
 BOOL WZLauncherController::GetUseDxvk()
 {
-    DWORD data = 0;
-    GameEntry* entry = m_settings.FindGame(m_gameName);
-    PathInfo* path = (entry && entry->update) ? entry->update->Path : nullptr;
-    if (path)
-        WZRegReadDword(path->RegistryRootKey, path->RegistrySubKey, L"UseDxvk", &data);
+    DWORD data = 0, size = sizeof(data), type = 0;
+    HKEY key;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, kLunariteKey, 0, KEY_READ, &key) == ERROR_SUCCESS)
+    {
+        if (RegQueryValueExW(key, L"UseDxvk", nullptr, &type, (BYTE*)&data, &size) != ERROR_SUCCESS || type != REG_DWORD)
+            data = 0;
+        RegCloseKey(key);
+    }
     return data != 0;
 }
 
