@@ -59,3 +59,6 @@ std::wstring WZGetModuleDir();
 // WZLauncher.kor.wzc, starts the game with -LANGUAGE=KOR and tells the patch server "ko".
 bool WZUserIsKorean();
 void WZSetUserLanguage(bool korean);   // Lunarite: the launcher's language toggle
+// Lunarite: window position handed from a launcher restarting itself (language toggle) to the new one; read once.
+void WZSaveRestartPosition(int x, int y);
+bool WZTakeRestartPosition(int& x, int& y);

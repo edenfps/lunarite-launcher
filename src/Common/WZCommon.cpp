@@ -111,6 +111,32 @@ void WZSetUserLanguage(bool korean)
     }
 }
 
+void WZSaveRestartPosition(int x, int y)
+{
+    HKEY key;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Lunarite", 0, nullptr, 0, KEY_WRITE, nullptr, &key, nullptr)
+        == ERROR_SUCCESS)
+    {
+        DWORD value[2] = { (DWORD)x, (DWORD)y };
+        RegSetValueExW(key, L"RestartPosition", 0, REG_BINARY, (const BYTE*)value, sizeof(value));
+        RegCloseKey(key);
+    }
+}
+
+bool WZTakeRestartPosition(int& x, int& y)
+{
+    HKEY key;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Lunarite", 0, KEY_READ | KEY_WRITE, &key) != ERROR_SUCCESS)
+        return false;
+    DWORD value[2] = {}, size = sizeof(value), type = 0;
+    bool found = RegQueryValueExW(key, L"RestartPosition", nullptr, &type, (BYTE*)value, &size) == ERROR_SUCCESS
+        && type == REG_BINARY && size == sizeof(value);
+    RegDeleteValueW(key, L"RestartPosition");
+    RegCloseKey(key);
+    if (found) { x = (int)value[0]; y = (int)value[1]; }
+    return found;
+}
+
 bool WZUserIsKorean()
 {
     // LUNARITE_LANGUAGE=ko or en overrides the Windows language (testing, or a player's choice).

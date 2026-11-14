@@ -474,8 +474,18 @@ BOOL CWZLauncherDlg::OnInitDialog()
         }
         InitUI();
         m_bVisible = TRUE;
+        // Lunarite: after a language restart, same spot as the old window, brought to the front.
+        int restartX = 0, restartY = 0;
+        bool restarted = WZTakeRestartPosition(restartX, restartY);
+        if (restarted && m_hWnd)
+            SetWindowPos(m_hWnd, nullptr, restartX, restartY, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         if (m_hWnd)
             ShowWindow(m_hWnd, SW_SHOW);
+        if (restarted && m_hWnd)
+        {
+            SetForegroundWindow(m_hWnd);
+            BringWindowToTop(m_hWnd);
+        }
         OutputDebugStringW(L"MsgSender::SetOutBound");
         m_controller.Msg().m_bOutbound = FALSE;
         m_controller.Msg().m_hPurpleWnd = nullptr;
@@ -811,6 +821,12 @@ void CWZLauncherDlg::OnAutoExecuteClicked()
 void CWZLauncherDlg::OnLanguageClicked()
 {
     WZSetUserLanguage(m_btnLang.m_toggled != 0);
+    // The new launcher opens where this one is and in front: Windows only lets a new process take the foreground
+    // when the foreground one allows it, otherwise it opens behind other windows and looks minimized.
+    RECT rc;
+    if (GetWindowRect(m_hWnd, &rc))
+        WZSaveRestartPosition(rc.left, rc.top);
+    AllowSetForegroundWindow(ASFW_ANY);
     wchar_t exe[MAX_PATH] = {};
     GetModuleFileNameW(nullptr, exe, MAX_PATH);
     if (m_hMutex)
