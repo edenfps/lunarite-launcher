@@ -111,6 +111,34 @@ void WZSetUserLanguage(bool korean)
     }
 }
 
+bool WZLanguageNeedsFileCheck()
+{
+    wchar_t saved[8] = L"en";
+    HKEY key;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Lunarite", 0, KEY_READ, &key) == ERROR_SUCCESS)
+    {
+        wchar_t value[8] = {};
+        DWORD size = sizeof(value) - sizeof(wchar_t), type = 0;
+        if (RegQueryValueExW(key, L"CheckedLanguage", nullptr, &type, (BYTE*)value, &size) == ERROR_SUCCESS
+            && type == REG_SZ && value[0])
+            wcscpy_s(saved, value);
+        RegCloseKey(key);
+    }
+    return _wcsicmp(saved, WZUserIsKorean() ? L"ko" : L"en") != 0;
+}
+
+void WZMarkLanguageChecked()
+{
+    HKEY key;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Lunarite", 0, nullptr, 0, KEY_WRITE, nullptr, &key, nullptr)
+        == ERROR_SUCCESS)
+    {
+        const wchar_t* value = WZUserIsKorean() ? L"ko" : L"en";
+        RegSetValueExW(key, L"CheckedLanguage", 0, REG_SZ, (const BYTE*)value, (DWORD)((wcslen(value) + 1) * sizeof(wchar_t)));
+        RegCloseKey(key);
+    }
+}
+
 void WZSaveRestartPosition(int x, int y)
 {
     HKEY key;

@@ -60,5 +60,9 @@ std::wstring WZGetModuleDir();
 bool WZUserIsKorean();
 void WZSetUserLanguage(bool korean);   // Lunarite: the launcher's language toggle
 // Lunarite: window position handed from a launcher restarting itself (language toggle) to the new one; read once.
+// Lunarite: the language whose files the last game update checked (HKCU CheckedLanguage, missing = en). English and
+// Korean share one patch version, so a language switch alone would never fetch the other language's files.
+bool WZLanguageNeedsFileCheck();
+void WZMarkLanguageChecked();
 void WZSaveRestartPosition(int x, int y);
 bool WZTakeRestartPosition(int& x, int& y);

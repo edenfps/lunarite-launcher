@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "../Common/Registry.h"
+extern bool g_LunariteVerifyAllFiles;  // CrashReport.cpp: the last game session crashed
 
 namespace
 {
@@ -438,6 +439,8 @@ void WZLauncherController::CompletionMonitorThread()
         else if (m_updateState == UPDATE_STATE_LATEST)
         {
             WZLog(L"CompleteEvent : Update Game Success");
+            WZMarkLanguageChecked();
+            g_LunariteVerifyAllFiles = false;
             m_updaterManager.UpdateVersion(GetSelectedGameInfo(), this);
             FinishUpdate();
             ApplyUpdateStateToUI();
@@ -555,6 +558,15 @@ void WZLauncherController::QueryGameStates()
             else
                 WZLog(L"Get Game State Fail : Version Error");
             m_msg.SetTotalStatic(strings->GetString(net ? DESC_ERROR_NETWORK : DESC_UNKNOWN_VERSION));
+        }
+        else if (game->Version->State && (WZLanguageNeedsFileCheck() || g_LunariteVerifyAllFiles))
+        {
+            // Lunarite: same version, but the files are for the other language (or the last session crashed):
+            // run the update anyway; its version step finds no hop and falls back to the full file check.
+            WZLog(g_LunariteVerifyAllFiles ? L"Game State : NEED_UPDATE (full check after a crash)"
+                                           : L"Game State : NEED_UPDATE (language changed)");
+            game->Version->State = UPDATE_STATE_NEED_UPDATE;
+            m_msg.SetGameListStateText(entry->ui->Guid, strings->GetString(DESC_UPDATE_REQUIRED));
         }
         else if (game->Version->State)
         {
