@@ -148,25 +148,25 @@ LRESULT CWZBitmapButton::OnLButtonUp(UINT msg, WPARAM wp, LPARAM lp, BOOL& handl
     }
     m_down = false;
     handled = TRUE;
-    LRESULT r = DefWindowProc(msg, wp, lp);
+    // Toggle first: DefWindowProc sends BN_CLICKED to the dialog synchronously, and its handlers read m_toggled
+    // (Lunarite 0003.0006: the old order saved the previous state, so the Korean box restarted in the same
+    // language and the DXVK box stored the opposite of what it showed).
     if (click)
         Toggle();
-    return r;
+    return DefWindowProc(msg, wp, lp);
 }
 
 LRESULT CWZBitmapButton::OnBmClick(UINT msg, WPARAM wp, LPARAM lp, BOOL& handled)
 {
     handled = TRUE;
-    LRESULT r = DefWindowProc(msg, wp, lp);
     Toggle();
-    return r;
+    return DefWindowProc(msg, wp, lp);
 }
 
 LRESULT CWZBitmapButton::OnKeyUp(UINT msg, WPARAM wp, LPARAM lp, BOOL& handled)
 {
     handled = TRUE;
-    LRESULT r = DefWindowProc(msg, wp, lp);
     if (wp == VK_SPACE)
         Toggle();
-    return r;
+    return DefWindowProc(msg, wp, lp);
 }

@@ -601,7 +601,7 @@ void CWZLauncherDlg::SetupButtons()
         m_btnDxvk.ShowWindow(SW_HIDE);
     }
 
-    // Lunarite: "한국어 / Korean" toggle, left of the logo (bitmaps from tools/make_language_checkbox.py).
+    // Lunarite: "한국어 / Korean" toggle, between the title and the logo (bitmaps from tools/make_language_checkbox.py).
     {
         wchar_t dir[MAX_PATH] = {}, on[MAX_PATH] = {}, off[MAX_PATH] = {};
         GetModuleFileNameW(nullptr, dir, MAX_PATH);
@@ -613,7 +613,7 @@ void CWZLauncherDlg::SetupButtons()
         if (langOn && langOff)
         {
             m_btnLang.SetToggleBitmaps(langOn, langOff);
-            m_btnLang.MoveWindow(84, 33, 150, 16, TRUE);
+            m_btnLang.MoveWindow(165, 32, 125, 18, TRUE);  // = tools/make_language_checkbox.py
             m_btnLang.m_toggled = WZUserIsKorean();
         }
         else
