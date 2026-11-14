@@ -19,6 +19,7 @@
 #define IDC_BTN_INSTALL             1012    // 0x3F4  "Install Game"
 #define IDC_CHK_AUTOEXEC            1013    // 0x3F5  "Auto Start Game"
 #define IDC_CHK_DXVK                1014    // Lunarite: "Vulkan (DXVK)" toggle
+#define IDC_CHK_LANG                1015    // Lunarite: "한국어 / Korean" toggle
 
 #ifndef IDC_STATIC
 #define IDC_STATIC                  -1

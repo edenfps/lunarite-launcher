@@ -99,11 +99,35 @@ std::wstring WZGetModuleDir()
     return path;
 }
 
+void WZSetUserLanguage(bool korean)
+{
+    HKEY key;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Lunarite", 0, nullptr, 0, KEY_WRITE, nullptr, &key, nullptr)
+        == ERROR_SUCCESS)
+    {
+        const wchar_t* value = korean ? L"ko" : L"en";
+        RegSetValueExW(key, L"Language", 0, REG_SZ, (const BYTE*)value, (DWORD)((wcslen(value) + 1) * sizeof(wchar_t)));
+        RegCloseKey(key);
+    }
+}
+
 bool WZUserIsKorean()
 {
     // LUNARITE_LANGUAGE=ko or en overrides the Windows language (testing, or a player's choice).
     wchar_t forced[8] = {};
     if (GetEnvironmentVariableW(L"LUNARITE_LANGUAGE", forced, 8) && forced[0])
         return _wcsnicmp(forced, L"ko", 2) == 0;
+    // The launcher's "한국어 / Korean" toggle (HKCU\Software\Lunarite\Language = ko | en).
+    wchar_t saved[8] = {};
+    DWORD size = sizeof(saved) - sizeof(wchar_t), type = 0;
+    HKEY key;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Lunarite", 0, KEY_READ, &key) == ERROR_SUCCESS)
+    {
+        bool found = RegQueryValueExW(key, L"Language", nullptr, &type, (BYTE*)saved, &size) == ERROR_SUCCESS
+            && type == REG_SZ && saved[0];
+        RegCloseKey(key);
+        if (found)
+            return _wcsnicmp(saved, L"ko", 2) == 0;
+    }
     return PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_KOREAN;
 }

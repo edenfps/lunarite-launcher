@@ -48,6 +48,7 @@ private:
     void    OnConfigClicked();
     void    OnAutoExecuteClicked();
     void    OnDxvkClicked();
+    void    OnLanguageClicked();
     void    OnUpdateClicked();
     void    OnExecuteClicked();
     void    OnStopClicked();
@@ -81,6 +82,7 @@ public:
     CWZBitmapButton     m_btnConfig;        // IDC_BTN_CONFIG
     CWZBitmapButton     m_btnAutoExecute;   // IDC_CHK_AUTOEXEC
     CWZBitmapButton     m_btnDxvk;          // IDC_CHK_DXVK (Lunarite)
+    CWZBitmapButton     m_btnLang;          // IDC_CHK_LANG (Lunarite)
     CWZBitmapButton     m_btnUpdate;        // IDC_BTN_UPDATE
     CWZBitmapButton     m_btnExecute;       // IDC_BTN_EXECUTE
     CWZBitmapButton     m_btnStop;          // IDC_BTN_STOP

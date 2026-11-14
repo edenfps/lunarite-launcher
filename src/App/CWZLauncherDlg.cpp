@@ -308,6 +308,7 @@ INT_PTR CWZLauncherDlg::HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam)
             case IDC_BTN_CONFIG:    OnConfigClicked();      return TRUE;
             case IDC_CHK_AUTOEXEC:  OnAutoExecuteClicked(); return TRUE;
             case IDC_CHK_DXVK:      OnDxvkClicked();        return TRUE;
+            case IDC_CHK_LANG:      OnLanguageClicked();    return TRUE;
             case IDC_BTN_UPDATE:    OnUpdateClicked();      return TRUE;
             case IDC_BTN_EXECUTE:   OnExecuteClicked();     return TRUE;
             case IDC_BTN_STOP:      OnStopClicked();        return TRUE;
@@ -392,6 +393,7 @@ BOOL CWZLauncherDlg::OnInitDialog()
     m_btnConfig.SubclassDlgItem(IDC_BTN_CONFIG, m_hWnd);
     m_btnAutoExecute.SubclassDlgItem(IDC_CHK_AUTOEXEC, m_hWnd);
     m_btnDxvk.SubclassDlgItem(IDC_CHK_DXVK, m_hWnd);
+    m_btnLang.SubclassDlgItem(IDC_CHK_LANG, m_hWnd);
     m_btnUpdate.SubclassDlgItem(IDC_BTN_UPDATE, m_hWnd);
     m_btnExecute.SubclassDlgItem(IDC_BTN_EXECUTE, m_hWnd);
     m_btnStop.SubclassDlgItem(IDC_BTN_STOP, m_hWnd);
@@ -599,6 +601,30 @@ void CWZLauncherDlg::SetupButtons()
         m_btnDxvk.ShowWindow(SW_HIDE);
     }
 
+    // Lunarite: "한국어 / Korean" toggle, left of the logo (bitmaps from tools/make_language_checkbox.py).
+    {
+        wchar_t dir[MAX_PATH] = {}, on[MAX_PATH] = {}, off[MAX_PATH] = {};
+        GetModuleFileNameW(nullptr, dir, MAX_PATH);
+        if (wchar_t* slash = wcsrchr(dir, L'\\')) slash[1] = L'\0';
+        swprintf_s(on, L"%sLauncherImage\\LangOn.bmp", dir);
+        swprintf_s(off, L"%sLauncherImage\\LangOff.bmp", dir);
+        HBITMAP langOn = (HBITMAP)LoadImageW(nullptr, on, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+        HBITMAP langOff = (HBITMAP)LoadImageW(nullptr, off, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+        if (langOn && langOff)
+        {
+            m_btnLang.SetToggleBitmaps(langOn, langOff);
+            m_btnLang.MoveWindow(84, 33, 150, 16, TRUE);
+            m_btnLang.m_toggled = WZUserIsKorean();
+        }
+        else
+        {
+            if (langOn) DeleteObject(langOn);
+            if (langOff) DeleteObject(langOff);
+            m_btnLang.ShowWindow(SW_HIDE);
+        }
+    }
+
+
     m_btnUpdate.ShowWindow(SW_HIDE);
     m_btnExecute.ShowWindow(SW_HIDE);
     m_btnStop.ShowWindow(SW_HIDE);
@@ -778,6 +804,23 @@ void CWZLauncherDlg::OnConfigClicked()
 void CWZLauncherDlg::OnAutoExecuteClicked()
 {
     m_controller.SetAutoExecute(m_btnAutoExecute.m_toggled);
+}
+
+// Lunarite: the language decides the launcher config (WZLauncher.kor.wzc), the files the patch server sends
+// (Accept-Language) and the game's -LANGUAGE switch, all read at start: save it and restart the launcher.
+void CWZLauncherDlg::OnLanguageClicked()
+{
+    WZSetUserLanguage(m_btnLang.m_toggled != 0);
+    wchar_t exe[MAX_PATH] = {};
+    GetModuleFileNameW(nullptr, exe, MAX_PATH);
+    if (m_hMutex)
+    {
+        ReleaseMutex(m_hMutex);
+        CloseHandle(m_hMutex);
+        m_hMutex = nullptr;
+    }
+    ShellExecuteW(nullptr, L"open", exe, nullptr, nullptr, SW_SHOWNORMAL);
+    ExitProcess(0);
 }
 
 void CWZLauncherDlg::OnDxvkClicked()
