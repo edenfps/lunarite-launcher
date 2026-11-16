@@ -28,6 +28,9 @@ AppPublisherURL=https://huxleythedystopia.com/
 ; Outside Program Files: the game writes its configs and logs into its own folder.
 DefaultDirName={sd}\Games\Lunarite
 DisableProgramGroupPage=yes
+; Always ask for the folder, also on a reinstall (Inno 6 defaults to "auto", which skips the page when a previous
+; install is found).
+DisableDirPage=no
 UsePreviousAppDir=yes
 PrivilegesRequired=lowest
 #if Ver >= EncodeVer(6,0,0)
