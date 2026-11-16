@@ -248,7 +248,10 @@ void SettingManager::ParseCommandLine()
     // (shortcut or double-click) runs the game with the language switch for the Windows language.
     if (__argc < 2)
     {
-        const wchar_t* language = WZUserIsKorean() ? L"-LANGUAGE=KOR" : L"-LANGUAGE=INT";
+        // Lower case, as retail: the game's scripts test GetLanguage() == "kor" / "int" (case-sensitive). With "KOR" a
+        // Korean client took the English branch and drew squad names with EngineFonts.HUDFont, which the Korean font
+        // package (EngineFonts_kor) lacks: "Assertion failed: Font" when a party member appeared (0003.0009).
+        const wchar_t* language = WZUserIsKorean() ? L"-LANGUAGE=kor" : L"-LANGUAGE=int";
         WZStrPrintf(m_CommandLine, 260, L"/g %s", language);
         m_Args = { L"/g", language };
         return;

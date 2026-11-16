@@ -56,7 +56,7 @@ int  WZStrPrintf(wchar_t* dst, size_t cch, const wchar_t* fmt, ...);
 std::wstring WZGetModuleDir();
 
 // Lunarite: true when the Windows display language is Korean (LUNARITE_LANGUAGE=ko/en overrides). The launcher then reads
-// WZLauncher.kor.wzc, starts the game with -LANGUAGE=KOR and tells the patch server "ko".
+// WZLauncher.kor.wzc, starts the game with -LANGUAGE=kor and tells the patch server "ko".
 bool WZUserIsKorean();
 void WZSetUserLanguage(bool korean);   // Lunarite: the launcher's language toggle
 // Lunarite: window position handed from a launcher restarting itself (language toggle) to the new one; read once.
